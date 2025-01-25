@@ -35,7 +35,7 @@ const LandingPage = () => {
             variant={isSmallScreen ? 'h4' : 'h3'}
             sx={{ fontWeight: 'bold' }}
           >
-            Master the Art of Small Talk
+            Master the Art of Communicating
           </Typography>
           <Typography
             variant="h6"

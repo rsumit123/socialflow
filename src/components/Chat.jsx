@@ -43,21 +43,31 @@ const Chat = () => {
 
     const createChatSession = async () => {
       try {
+        setIsTyping(true); // Show typing indicator before API call
+
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/chat/sessions/`);
         const { session_id, ai_response } = response.data;
         setSessionId(session_id);
+
         if (ai_response) {
-          setMessages([
-            {
-              message: ai_response,
-              sender: 'bot',
-            },
-          ]);
+          // Optional: Introduce a delay to simulate typing
+          setTimeout(() => {
+            setMessages([
+              {
+                message: ai_response,
+                sender: 'bot',
+              },
+            ]);
+            setIsTyping(false); // Hide typing indicator after setting the message
+          }, 1000); // 1-second delay
+        } else {
+          setIsTyping(false); // Hide typing indicator if no AI response
         }
       } catch (error) {
         console.error('Error creating chat session:', error);
         setErrorMessage('Failed to create chat session.');
         setOpenSnackbar(true);
+        setIsTyping(false); // Ensure typing indicator is hidden on error
       }
     };
 
@@ -167,9 +177,7 @@ const Chat = () => {
                 mb: 1,
               }}
             >
-              {msg.sender === 'bot' && (
-                <Avatar sx={{ mr: 1 }}>🤖</Avatar>
-              )}
+              {msg.sender === 'bot' && <Avatar sx={{ mr: 1 }}>🤖</Avatar>}
               <ListItemText
                 primary={msg.message}
                 sx={{
@@ -181,11 +189,11 @@ const Chat = () => {
                   wordWrap: 'break-word',
                 }}
               />
-              {msg.sender === 'user' && (
-                <Avatar sx={{ ml: 1 }}>👤</Avatar>
-              )}
+              {msg.sender === 'user' && <Avatar sx={{ ml: 1 }}>👤</Avatar>}
             </ListItem>
           ))}
+
+          {/* Typing Indicator */}
           {isTyping && (
             <ListItem sx={{ justifyContent: 'flex-start', mb: 1 }}>
               <Avatar sx={{ mr: 1 }}>🤖</Avatar>
