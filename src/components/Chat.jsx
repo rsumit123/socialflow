@@ -142,7 +142,7 @@ const Chat = () => {
         <DialogTitle id="welcome-dialog-title">Welcome to SocialFlow</DialogTitle>
         <DialogContent>
           <DialogContentText id="welcome-dialog-description">
-            Hey! Welcome to SocialFlow. You are about to improve your social conversation skills. Let's see how you fare in a real-life stimulated scenario. We are awaiting your result.
+            Hey! Welcome to SocialFlow. You are about to improve your social conversation skills. Let's see how you fare in a real-life stimulated scenario. Please complete 10 messages to generate a Report else type "end chat" to end abruptly. We are awaiting your result.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
