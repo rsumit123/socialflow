@@ -45,20 +45,34 @@ const Chat = () => {
       try {
         setIsTyping(true); // Show typing indicator before API call
 
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/chat/sessions/`);
-        const { session_id, ai_response } = response.data;
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v2/chat/sessions/`);
+        const { session_id, ai_response, custom_scenario } = response.data;
         setSessionId(session_id);
 
-        if (ai_response) {
-          // Optional: Introduce a delay to simulate typing
+        if (custom_scenario) {
+          // Optional: Introduce a delay to simulate typing for system message
           setTimeout(() => {
             setMessages([
+              {
+                message: custom_scenario,
+                sender: 'system',
+              },
+            ]);
+            setIsTyping(false); // Hide typing indicator after setting the system message
+          }, 500); // 0.5-second delay for better UX
+        }
+
+        if (ai_response) {
+          // Optional: Introduce a delay to simulate typing for AI response
+          setTimeout(() => {
+            setMessages((prev) => [
+              ...prev,
               {
                 message: ai_response,
                 sender: 'bot',
               },
             ]);
-            setIsTyping(false); // Hide typing indicator after setting the message
+            setIsTyping(false); // Hide typing indicator after setting the AI message
           }, 1000); // 1-second delay
         } else {
           setIsTyping(false); // Hide typing indicator if no AI response
@@ -122,6 +136,80 @@ const Chat = () => {
     setOpenModal(false);
   };
 
+  // Function to render messages based on sender
+  const renderMessage = (msg, index) => {
+    switch (msg.sender) {
+      case 'system':
+        return (
+          <ListItem key={index} sx={{ justifyContent: 'center', mb: 1 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                padding: 1,
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                borderRadius: 2,
+                maxWidth: '80%',
+              }}
+            >
+              <Typography variant="body2" color="text.secondary" align="center">
+                {msg.message}
+              </Typography>
+            </Paper>
+          </ListItem>
+        );
+      case 'user':
+        return (
+          <ListItem
+            key={index}
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              mb: 1,
+            }}
+          >
+            <Avatar sx={{ ml: 1 }}>👤</Avatar>
+            <ListItemText
+              primary={msg.message}
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                borderRadius: 2,
+                padding: 1,
+                maxWidth: '75%',
+                wordWrap: 'break-word',
+              }}
+            />
+          </ListItem>
+        );
+      case 'bot':
+        return (
+          <ListItem
+            key={index}
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-start',
+              mb: 1,
+            }}
+          >
+            <Avatar sx={{ mr: 1 }}>🤖</Avatar>
+            <ListItemText
+              primary={msg.message}
+              sx={{
+                bgcolor: 'grey.300',
+                color: 'text.primary',
+                borderRadius: 2,
+                padding: 1,
+                maxWidth: '75%',
+                wordWrap: 'break-word',
+              }}
+            />
+          </ListItem>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -142,11 +230,12 @@ const Chat = () => {
         <DialogTitle id="welcome-dialog-title">Welcome to SocialFlow</DialogTitle>
         <DialogContent>
           <DialogContentText id="welcome-dialog-description">
-            Hey! Welcome to SocialFlow. You are about to improve your social conversation skills. Let's see how you fare in a real-life stimulated scenario. Please complete 10 messages to generate a Report else type "end chat" to end abruptly. We are awaiting your result.
+            Hey! Welcome to SocialFlow. You are about to improve your social conversation skills.
+            Let's see how you fare in a real-life stimulated scenario. We are awaiting your result.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseModal} color="primary">
+          <Button onClick={handleCloseModal} color="primary" aria-label="Start Chat">
             Let's Go
           </Button>
         </DialogActions>
@@ -168,30 +257,7 @@ const Chat = () => {
           SocialFlow Chat
         </Typography>
         <List>
-          {messages.map((msg, index) => (
-            <ListItem
-              key={index}
-              sx={{
-                display: 'flex',
-                justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                mb: 1,
-              }}
-            >
-              {msg.sender === 'bot' && <Avatar sx={{ mr: 1 }}>🤖</Avatar>}
-              <ListItemText
-                primary={msg.message}
-                sx={{
-                  bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.300',
-                  color: msg.sender === 'user' ? 'primary.contrastText' : 'text.primary',
-                  borderRadius: 2,
-                  padding: 1,
-                  maxWidth: '75%',
-                  wordWrap: 'break-word',
-                }}
-              />
-              {msg.sender === 'user' && <Avatar sx={{ ml: 1 }}>👤</Avatar>}
-            </ListItem>
-          ))}
+          {messages.map((msg, index) => renderMessage(msg, index))}
 
           {/* Typing Indicator */}
           {isTyping && (
@@ -290,6 +356,7 @@ const Chat = () => {
             }
           }}
           disabled={isTyping} // Disable input when AI is typing
+          aria-label="Type your message"
         />
         <Button
           variant="contained"
@@ -297,6 +364,7 @@ const Chat = () => {
           onClick={handleSendMessage}
           sx={{ minWidth: 'auto', padding: '8px 16px' }}
           disabled={isTyping || !userMessage.trim()} // Disable send when AI is typing or message is empty
+          aria-label="Send message"
         >
           Send
         </Button>
