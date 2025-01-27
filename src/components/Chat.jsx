@@ -20,9 +20,11 @@ import {
   DialogActions,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const Chat = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth(); // Destructure logout from useAuth
+  const navigate = useNavigate(); // Initialize useNavigate hook
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]); // Initialize with empty array
   const [userMessage, setUserMessage] = useState('');
@@ -32,6 +34,8 @@ const Chat = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
   const [openModal, setOpenModal] = useState(true); // State for modal
+
+  const [sessionExpired, setSessionExpired] = useState(false); // New state for session expiration
 
   const isMounted = useRef(false); // Prevent duplicate session creation
   const messagesEndRef = useRef(null); // For auto-scroll
@@ -79,14 +83,22 @@ const Chat = () => {
         }
       } catch (error) {
         console.error('Error creating chat session:', error);
-        setErrorMessage('Failed to create chat session.');
-        setOpenSnackbar(true);
+
+        if (error.response && error.response.data && error.response.data.error === 'Token has expired!') {
+          // Handle token expiration
+          setSessionExpired(true); // Show expiration dialog
+          logout(); // Log out the user from AuthContext
+        } else {
+          setErrorMessage('Failed to create chat session.');
+          setOpenSnackbar(true);
+        }
+
         setIsTyping(false); // Ensure typing indicator is hidden on error
       }
     };
 
     createChatSession();
-  }, []);
+  }, [logout]);
 
   // Auto-scroll to the latest message
   useEffect(() => {
@@ -120,12 +132,19 @@ const Chat = () => {
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages((prev) => [
-        ...prev,
-        { message: 'Sorry, there was an error processing your message.', sender: 'bot' },
-      ]);
-      setErrorMessage('Failed to send message. Please try again.');
-      setOpenSnackbar(true);
+
+      if (error.response && error.response.data && error.response.data.error === 'Token has expired!') {
+        // Handle token expiration
+        setSessionExpired(true); // Show expiration dialog
+        logout(); // Log out the user from AuthContext
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { message: 'Sorry, there was an error processing your message.', sender: 'bot' },
+        ]);
+        setErrorMessage('Failed to send message. Please try again.');
+        setOpenSnackbar(true);
+      }
     } finally {
       setIsTyping(false); // Hide typing indicator
     }
@@ -220,6 +239,32 @@ const Chat = () => {
         bgcolor: 'background.default',
       }}
     >
+      {/* Session Expiration Dialog */}
+      <Dialog
+        open={sessionExpired}
+        onClose={() => {}} // Prevent closing the dialog manually
+        aria-labelledby="session-expired-dialog-title"
+        aria-describedby="session-expired-dialog-description"
+      >
+        <DialogTitle id="session-expired-dialog-title">Session Expired</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="session-expired-dialog-description">
+            Your session has expired. Please login again.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => navigate('/login')}
+            color="primary"
+            variant="contained"
+            autoFocus
+            aria-label="Redirect to Login Page"
+          >
+            Go to Login
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Welcome Modal */}
       <Dialog
         open={openModal}
@@ -370,7 +415,7 @@ const Chat = () => {
         </Button>
       </Box>
 
-      {/* Snackbar for Error Messages */}
+      {/* Snackbar for General Error Messages */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}
