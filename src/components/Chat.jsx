@@ -23,7 +23,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const Chat = () => {
-  const { user, logout } = useAuth(); // Destructure logout from useAuth
+  const { user, logout } = useAuth(); // Destructure logout from AuthContext
   const navigate = useNavigate(); // Initialize useNavigate hook
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]); // Initialize with empty array
@@ -33,12 +33,26 @@ const Chat = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
-  const [openModal, setOpenModal] = useState(true); // State for modal
+  const [openModal, setOpenModal] = useState(true); // State for welcome modal
 
-  const [sessionExpired, setSessionExpired] = useState(false); // New state for session expiration
+  const [sessionExpired, setSessionExpired] = useState(false); // State for session expiration
+  const [evaluationModal, setEvaluationModal] = useState(false); // State for evaluation modal
+  const [reportLink, setReportLink] = useState(''); // State to store report link
 
   const isMounted = useRef(false); // Prevent duplicate session creation
   const messagesEndRef = useRef(null); // For auto-scroll
+
+  // Helper function to extract session ID from report link
+  const extractSessionIdFromLink = (link) => {
+    try {
+      const url = new URL(link);
+      const pathSegments = url.pathname.split('/');
+      return pathSegments[pathSegments.length - 1]; // Assumes session_id is the last segment
+    } catch (error) {
+      console.error('Invalid report link:', error);
+      return '';
+    }
+  };
 
   // Create a chat session when the component mounts
   useEffect(() => {
@@ -84,9 +98,13 @@ const Chat = () => {
       } catch (error) {
         console.error('Error creating chat session:', error);
 
-        if (error.response && error.response.data && error.response.data.error === 'Token has expired!') {
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.error === 'Token has expired!'
+        ) {
           // Handle token expiration
-          setSessionExpired(true); // Show expiration dialog
+          setSessionExpired(true); // Show session expiration dialog
           logout(); // Log out the user from AuthContext
         } else {
           setErrorMessage('Failed to create chat session.');
@@ -125,17 +143,34 @@ const Chat = () => {
         newMessage
       );
 
-      // Assuming the response contains ai_response
-      const { ai_response } = response.data;
-      if (ai_response) {
+      // Assuming the response contains ai_response and possibly evaluation
+      const { ai_response, evaluation } = response.data;
+
+      if (evaluation) {
+        // Extract the report link
+        const { report_link } = evaluation;
+        setReportLink(report_link || '');
+
+        // Add the AI response to messages
         setMessages((prev) => [...prev, { message: ai_response, sender: 'bot' }]);
+
+        // Show the evaluation modal
+        setEvaluationModal(true);
+      } else {
+        if (ai_response) {
+          setMessages((prev) => [...prev, { message: ai_response, sender: 'bot' }]);
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error);
 
-      if (error.response && error.response.data && error.response.data.error === 'Token has expired!') {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.error === 'Token has expired!'
+      ) {
         // Handle token expiration
-        setSessionExpired(true); // Show expiration dialog
+        setSessionExpired(true); // Show session expiration dialog
         logout(); // Log out the user from AuthContext
       } else {
         setMessages((prev) => [
@@ -150,83 +185,9 @@ const Chat = () => {
     }
   };
 
-  // Handle closing the modal
+  // Handle closing the welcome modal
   const handleCloseModal = () => {
     setOpenModal(false);
-  };
-
-  // Function to render messages based on sender
-  const renderMessage = (msg, index) => {
-    switch (msg.sender) {
-      case 'system':
-        return (
-          <ListItem key={index} sx={{ justifyContent: 'center', mb: 1 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                padding: 1,
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                borderRadius: 2,
-                maxWidth: '80%',
-              }}
-            >
-              <Typography variant="body2" color="text.secondary" align="center">
-                {msg.message}
-              </Typography>
-            </Paper>
-          </ListItem>
-        );
-      case 'user':
-        return (
-          <ListItem
-            key={index}
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              mb: 1,
-            }}
-          >
-            <Avatar sx={{ ml: 1 }}>👤</Avatar>
-            <ListItemText
-              primary={msg.message}
-              sx={{
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
-                borderRadius: 2,
-                padding: 1,
-                maxWidth: '75%',
-                wordWrap: 'break-word',
-              }}
-            />
-          </ListItem>
-        );
-      case 'bot':
-        return (
-          <ListItem
-            key={index}
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-start',
-              mb: 1,
-            }}
-          >
-            <Avatar sx={{ mr: 1 }}>🤖</Avatar>
-            <ListItemText
-              primary={msg.message}
-              sx={{
-                bgcolor: 'grey.300',
-                color: 'text.primary',
-                borderRadius: 2,
-                padding: 1,
-                maxWidth: '75%',
-                wordWrap: 'break-word',
-              }}
-            />
-          </ListItem>
-        );
-      default:
-        return null;
-    }
   };
 
   return (
@@ -261,6 +222,53 @@ const Chat = () => {
             aria-label="Redirect to Login Page"
           >
             Go to Login
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Evaluation Modal */}
+      <Dialog
+        open={evaluationModal}
+        onClose={() => {}} // Prevent closing the dialog manually
+        aria-labelledby="evaluation-dialog-title"
+        aria-describedby="evaluation-dialog-description"
+      >
+        <DialogTitle id="evaluation-dialog-title">Report Card Generated</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="evaluation-dialog-description">
+            Your report card has been generated. Please click{' '}
+            <Button
+              onClick={() => {
+                setEvaluationModal(false); // Close the modal
+                if (reportLink) {
+                  const sessionId = extractSessionIdFromLink(reportLink);
+                  if (sessionId) {
+                    navigate(`/report-cards/${sessionId}`);
+                  } else {
+                    navigate('/report-cards'); // Fallback to report cards list
+                  }
+                }
+              }}
+              color="primary"
+              variant="text"
+              sx={{ textTransform: 'none', padding: 0 }}
+            >
+              Report Cards
+            </Button>{' '}
+            to view your performance. You can continue chatting if you like, but your report will not be updated.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setEvaluationModal(false); // Close the modal
+            }}
+            color="primary"
+            variant="contained"
+            autoFocus
+            aria-label="Continue Chatting"
+          >
+            Continue Chatting
           </Button>
         </DialogActions>
       </Dialog>
@@ -302,7 +310,78 @@ const Chat = () => {
           SocialFlow Chat
         </Typography>
         <List>
-          {messages.map((msg, index) => renderMessage(msg, index))}
+          {messages.map((msg, index) => {
+            switch (msg.sender) {
+              case 'system':
+                return (
+                  <ListItem key={index} sx={{ justifyContent: 'center', mb: 1 }}>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        padding: 1,
+                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        borderRadius: 2,
+                        maxWidth: '80%',
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary" align="center">
+                        {msg.message}
+                      </Typography>
+                    </Paper>
+                  </ListItem>
+                );
+              case 'user':
+                return (
+                  <ListItem
+                    key={index}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      mb: 1,
+                    }}
+                  >
+                    <Avatar sx={{ ml: 1 }}>👤</Avatar>
+                    <ListItemText
+                      primary={msg.message}
+                      sx={{
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                        borderRadius: 2,
+                        padding: 1,
+                        maxWidth: '75%',
+                        wordWrap: 'break-word',
+                      }}
+                    />
+                  </ListItem>
+                );
+              case 'bot':
+                return (
+                  <ListItem
+                    key={index}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-start',
+                      mb: 1,
+                    }}
+                  >
+                    <Avatar sx={{ mr: 1 }}>🤖</Avatar>
+                    <ListItemText
+                      primary={msg.message}
+                      sx={{
+                        bgcolor: 'grey.300',
+                        color: 'text.primary',
+                        borderRadius: 2,
+                        padding: 1,
+                        maxWidth: '75%',
+                        wordWrap: 'break-word',
+                      }}
+                    />
+                  </ListItem>
+                );
+              default:
+                return null;
+            }
+          })}
 
           {/* Typing Indicator */}
           {isTyping && (
@@ -415,7 +494,7 @@ const Chat = () => {
         </Button>
       </Box>
 
-      {/* Snackbar for General Error Messages */}
+      {/* Snackbar for Error Messages */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}

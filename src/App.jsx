@@ -8,7 +8,8 @@ import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import Register from './components/Register';
 import Chat from './components/Chat';
-import ReportCards from './components/ReportCards'; // Import the new component
+import ReportCards from './components/ReportCards';
+import ReportCardDetail from './components/ReportCardDetail'; // Import the new component
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -59,6 +60,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ReportCards />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/report-cards/:session_id"
+              element={
+                <ProtectedRoute>
+                  <ReportCardDetail />
                 </ProtectedRoute>
               }
             />

@@ -13,16 +13,19 @@ import {
   Alert,
   LinearProgress,
   Button,
+  CardActionArea, // Import CardActionArea
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 // Register Chart.js components
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 const ReportCards = () => {
   const { user } = useAuth();
+  const navigate = useNavigate(); // Initialize useNavigate
   const [reportCards, setReportCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -39,8 +42,19 @@ const ReportCards = () => {
         setReportCards(response.data.report_cards); // Correctly accessing the array
       } catch (error) {
         console.error('Error fetching report cards:', error);
-        setErrorMessage('Failed to load report cards.');
-        setOpenSnackbar(true);
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.error === 'Token has expired!'
+        ) {
+          // Handle token expiration (similar to Chat.jsx)
+          // For simplicity, redirect to login with an alert
+          setErrorMessage('Your session has expired. Please login again!');
+          setOpenSnackbar(true);
+        } else {
+          setErrorMessage('Failed to load report cards.');
+          setOpenSnackbar(true);
+        }
       } finally {
         setLoading(false);
       }
@@ -86,6 +100,11 @@ const ReportCards = () => {
     },
   };
 
+  // Handle clicking on a report card
+  const handleReportClick = (session_id) => {
+    navigate(`/report-cards/${session_id}`);
+  };
+
   return (
     <Box
       sx={{
@@ -118,8 +137,8 @@ const ReportCards = () => {
 
           {/* Individual Report Cards */}
           <Grid container spacing={2}>
-            {reportCards.map((rc, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
+            {reportCards.map((rc) => (
+              <Grid item xs={12} sm={6} md={4} key={rc.session_id}>
                 <Card
                   variant="outlined"
                   sx={{
@@ -127,31 +146,41 @@ const ReportCards = () => {
                     '&:hover': { transform: 'scale(1.02)' },
                   }}
                 >
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Report Card {index + 1}
-                    </Typography>
-                    <Typography variant="body1">
-                      <strong>Total Score:</strong> {rc.total_score} / 100
-                    </Typography>
-                    <Box sx={{ mt: 1, mb: 2 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={rc.total_score}
-                        color={
-                          rc.total_score >= 70
-                            ? 'success'
-                            : rc.total_score >= 40
-                            ? 'warning'
-                            : 'error'
-                        }
-                        sx={{ height: 10, borderRadius: 5 }}
-                      />
-                    </Box>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      <strong>Feedback:</strong> {rc.feedback || 'No feedback provided.'}
-                    </Typography>
-                  </CardContent>
+                  <CardActionArea onClick={() => handleReportClick(rc.session_id)}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        {rc.feedback ? 'Detailed Report' : 'Report Card'}
+                      </Typography>
+                      <Typography variant="body1">
+                        <strong>Total Score:</strong> {rc.total_score} / 100
+                      </Typography>
+                      <Box sx={{ mt: 1, mb: 2 }}>
+                        <LinearProgress
+                          variant="determinate"
+                          value={rc.total_score || 0}
+                          color={
+                            rc.total_score >= 70
+                              ? 'success'
+                              : rc.total_score >= 40
+                              ? 'warning'
+                              : 'error'
+                          }
+                          sx={{ height: 10, borderRadius: 5 }}
+                        />
+                      </Box>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        <strong>Feedback:</strong>{' '}
+                        {rc.feedback
+                          ? rc.feedback.length > 100
+                            ? rc.feedback.substring(0, 100) + '...'
+                            : rc.feedback
+                          : 'No feedback provided.'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Click to view details
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
                 </Card>
               </Grid>
             ))}
