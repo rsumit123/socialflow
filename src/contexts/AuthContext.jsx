@@ -27,9 +27,7 @@ export const AuthProvider = ({ children }) => {
           config.headers['Authorization'] = `Bearer ${token}`;
           return config;
         },
-        (error) => {
-          return Promise.reject(error);
-        }
+        (error) => Promise.reject(error)
       );
 
       // Cleanup the interceptor on unmount or when token changes
@@ -48,7 +46,7 @@ export const AuthProvider = ({ children }) => {
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         setUser({ email, token: response.data.token });
-        return response.data; // Optional: return data in case it needs to be used
+        return response.data;
       }
     } catch (error) {
       console.error('Registration failed:', error);
@@ -69,13 +67,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // New guestLogin function
+  const guestLogin = async () => {
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/guest/`);
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        // Optionally, you can update user state with additional info if returned by your endpoint.
+        setUser({ token: response.data.token });
+      }
+    } catch (error) {
+      console.error('Guest login failed:', error);
+      throw error;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, login, logout, register, guestLogin }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,12 +5,11 @@ import { Container, TextField, Button, Typography, Box, CircularProgress } from 
 import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, guestLogin } = useAuth(); // Ensure guestLogin is implemented in your context
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
@@ -23,6 +22,19 @@ const Login = () => {
     } catch (error) {
       setLoading(false);
       alert('Failed to log in. Please check your credentials.');
+    }
+  };
+
+  const handleGuestLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await guestLogin();
+      setLoading(false);
+      navigate('/chat');
+    } catch (error) {
+      setLoading(false);
+      alert('Failed to log in as guest.');
     }
   };
 
@@ -75,6 +87,16 @@ const Login = () => {
             disabled={loading}
           >
             {loading ? <CircularProgress size={24} color="inherit" /> : 'Log In'}
+          </Button>
+          <Button
+            fullWidth
+            variant="outlined"
+            color="secondary"
+            sx={{ mt: 1, mb: 2 }}
+            onClick={handleGuestLogin}
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'Login as Guest'}
           </Button>
           <Typography variant="body2" align="center">
             Don't have an account? <Link to="/register">Sign Up</Link>
