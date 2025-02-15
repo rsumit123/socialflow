@@ -13,7 +13,7 @@ const LandingPage = () => {
 
   const handleGetStarted = () => {
     if (user) {
-      navigate('/chat');
+      navigate('/home');
     } else {
       navigate('/login');
     }
