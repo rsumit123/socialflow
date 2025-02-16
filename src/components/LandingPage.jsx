@@ -33,21 +33,33 @@ const LandingPage = () => {
         <Grid item xs={12} md={6}>
           <Typography
             variant={isSmallScreen ? 'h4' : 'h3'}
-            sx={{ fontWeight: 'bold' }}
+            sx={{ fontWeight: 'bold', lineHeight: 1.2 }}
           >
             Master the Art of Communicating
           </Typography>
           <Typography
             variant="h6"
-            sx={{ mt: 2, color: 'text.secondary' }}
+            sx={{ mt: 2, color: 'text.secondary', lineHeight: 1.5 }}
           >
-            Engage in realistic social scenarios with AI-driven conversations to boost your confidence and communication skills.
+            Dive into realistic social scenarios with immersive, interactive conversations designed to boost your confidence and enhance your communication skills.
           </Typography>
           <Button
             variant="contained"
             color="secondary"
             size="large"
-            sx={{ mt: 4 }}
+            sx={{
+              mt: 4,
+              borderRadius: '20px',
+              paddingX: theme.spacing(4),
+              paddingY: theme.spacing(1.5),
+              textTransform: 'none',
+              fontWeight: 'bold',
+              boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+              transition: 'background-color 0.3s ease',
+              '&:hover': {
+                backgroundColor: theme.palette.secondary.dark,
+              },
+            }}
             onClick={handleGetStarted}
           >
             Get Started
@@ -58,6 +70,7 @@ const LandingPage = () => {
             sx={{
               fontSize: isSmallScreen ? 200 : 300,
               color: 'secondary.main',
+              opacity: 0.8,
             }}
           />
         </Grid>

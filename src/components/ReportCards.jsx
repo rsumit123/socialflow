@@ -34,7 +34,7 @@ const ReportCards = () => {
   useEffect(() => {
     const fetchReportCards = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/report-cards/`, {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/report/report-cards/`, {
           headers: {
             Authorization: `Bearer ${user.token}`, // Ensure user.token is correctly set
           },

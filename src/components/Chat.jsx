@@ -63,7 +63,7 @@ const Chat = () => {
       try {
         setIsTyping(true); // Show typing indicator before API call
 
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v2/chat/sessions/`);
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/chat/sessions/`);
         const { session_id, ai_response, custom_scenario } = response.data;
         setSessionId(session_id);
 
@@ -72,7 +72,7 @@ const Chat = () => {
           setTimeout(() => {
             setMessages([
               {
-                message: custom_scenario,
+                message: custom_scenario.scenario,
                 sender: 'system',
               },
             ]);
