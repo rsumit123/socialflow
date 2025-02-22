@@ -25,10 +25,10 @@ const Footer = () => {
         <Typography variant="h6">SocialFlow</Typography>
         <Typography variant="body2">Enhancing Your Social Skills</Typography>
         <Box mt={2}>
-          <Link href="#" sx={{ color: 'white', mr: 2, '&:hover': { textDecoration: 'underline' } }}>
+          <Link href="/privacy" sx={{ color: 'white', mr: 2, '&:hover': { textDecoration: 'underline' } }}>
             Privacy Policy
           </Link>
-          <Link href="#" sx={{ color: 'white', mr: 2, '&:hover': { textDecoration: 'underline' } }}>
+          <Link href="/terms" sx={{ color: 'white', mr: 2, '&:hover': { textDecoration: 'underline' } }}>
             Terms of Service
           </Link>
         </Box>

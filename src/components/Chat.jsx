@@ -1,4 +1,3 @@
-// src/components/Chat.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import {
@@ -9,7 +8,6 @@ import {
   Paper,
   List,
   ListItem,
-  ListItemText,
   Avatar,
   Snackbar,
   Alert,
@@ -18,57 +16,225 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  useTheme,
+  useMediaQuery,
+  IconButton,
+  Fade,
 } from '@mui/material';
+import { Send, EmojiEmotions, Psychology, School } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
+
+// MessageBubble is memoized so it only re-renders if its props change.
+const MessageBubble = React.memo(({ message, sender, theme }) => {
+  const isUser = sender === 'user';
+
+  return (
+    <Fade in={true} timeout={500}>
+      <ListItem
+        sx={{
+          display: 'flex',
+          justifyContent: isUser ? 'flex-end' : 'flex-start',
+          mb: 1,
+          alignItems: 'flex-start',
+        }}
+      >
+        {!isUser && (
+          <Avatar
+            sx={{
+              mr: 1,
+              bgcolor: sender === 'bot' ? theme.palette.primary.main : 'grey.300',
+              animation: sender === 'bot' ? 'pulse 2s infinite' : 'none',
+              '@keyframes pulse': {
+                '0%': { boxShadow: '0 0 0 0 rgba(0, 0, 0, 0.2)' },
+                '70%': { boxShadow: '0 0 0 10px rgba(0, 0, 0, 0)' },
+                '100%': { boxShadow: '0 0 0 0 rgba(0, 0, 0, 0)' },
+              },
+            }}
+          >
+            {sender === 'bot' ? <Psychology /> : <School />}
+          </Avatar>
+        )}
+        <Paper
+          elevation={2}
+          sx={{
+            padding: 1.5,
+            // For user messages use a gradient, for non-user use a light grey.
+            bgcolor: isUser
+              ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+              : sender === 'system'
+              ? theme.palette.background.default
+              : theme.palette.grey[200],
+            // For non-user messages, we force a contrasting text color using getContrastText.
+            color: isUser
+              ? 'white'
+              : theme.palette.getContrastText(theme.palette.grey[200]),
+            borderRadius: 2,
+            maxWidth: '75%',
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              width: 0,
+              height: 0,
+              borderStyle: 'solid',
+              ...(isUser
+                ? {
+                    right: -8,
+                    borderWidth: '8px 0 8px 8px',
+                    borderColor: `transparent transparent transparent ${theme.palette.primary.main}`,
+                  }
+                : {
+                    left: -8,
+                    borderWidth: '8px 8px 8px 0',
+                    borderColor: `transparent ${
+                      sender === 'system'
+                        ? theme.palette.background.default
+                        : theme.palette.grey[200]
+                    } transparent transparent`,
+                  }),
+            },
+          }}
+        >
+          {/* Render as a div to avoid nested <p> issues */}
+          <Typography variant="body1" component="div">
+            {message}
+          </Typography>
+        </Paper>
+        {isUser && (
+          <Avatar
+            sx={{
+              ml: 1,
+              bgcolor: theme.palette.secondary.main,
+              animation: 'fadeIn 0.3s ease-in',
+              '@keyframes fadeIn': {
+                '0%': { opacity: 0 },
+                '100%': { opacity: 1 },
+              },
+            }}
+          >
+            <EmojiEmotions />
+          </Avatar>
+        )}
+      </ListItem>
+    </Fade>
+  );
+});
+
+// MessageList is extracted and memoized so that updates to the input field won't force re-rendering of the chat history.
+const MessageList = React.memo(({ messages, isTyping, theme }) => (
+  <List>
+    {messages.map((msg, index) => (
+      <MessageBubble key={index} message={msg.message} sender={msg.sender} theme={theme} />
+    ))}
+    {isTyping && (
+      <MessageBubble
+        key="typing"
+        message={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography component="div">Typing</Typography>
+            {[0, 1, 2].map((i) => (
+              <Box
+                key={i}
+                sx={{
+                  width: 6,
+                  height: 6,
+                  bgcolor: theme.palette.primary.main,
+                  borderRadius: '50%',
+                  animation: 'bounce 1.4s infinite ease-in-out both',
+                  animationDelay: `${i * 0.16}s`,
+                  '@keyframes bounce': {
+                    '0%, 80%, 100%': { transform: 'scale(0)' },
+                    '40%': { transform: 'scale(1)' },
+                  },
+                }}
+              />
+            ))}
+          </Box>
+        }
+        sender="bot"
+        theme={theme}
+      />
+    )}
+  </List>
+));
+
+const CustomDialog = ({ open, title, content, actions, onClose }) => {
+  const theme = useTheme();
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          bgcolor: 'background.paper',
+          backgroundImage: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 700,
+        }}
+      >
+        {title}
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText sx={{ color: 'text.primary' }}>{content}</DialogContentText>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>{actions}</DialogActions>
+    </Dialog>
+  );
+};
 
 const Chat = () => {
-  const { user, logout } = useAuth(); // Destructure logout from AuthContext
-  const navigate = useNavigate(); // Initialize useNavigate hook
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
   const [sessionId, setSessionId] = useState(null);
-  const [messages, setMessages] = useState([]); // Initialize with empty array
+  const [messages, setMessages] = useState([]);
   const [userMessage, setUserMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-
   const [errorMessage, setErrorMessage] = useState('');
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [openModal, setOpenModal] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [evaluationModal, setEvaluationModal] = useState(false);
+  const [reportLink, setReportLink] = useState('');
 
-  const [openModal, setOpenModal] = useState(true); // State for welcome modal
+  const isMounted = useRef(false);
+  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
-  const [sessionExpired, setSessionExpired] = useState(false); // State for session expiration
-  const [evaluationModal, setEvaluationModal] = useState(false); // State for evaluation modal
-  const [reportLink, setReportLink] = useState(''); // State to store report link
-
-  const isMounted = useRef(false); // Prevent duplicate session creation
-  const messagesEndRef = useRef(null); // For auto-scroll
-
-  // Helper function to extract session ID from report link
   const extractSessionIdFromLink = (link) => {
     try {
       const url = new URL(link);
       const pathSegments = url.pathname.split('/');
-      return pathSegments[pathSegments.length - 1]; // Assumes session_id is the last segment
+      return pathSegments[pathSegments.length - 1];
     } catch (error) {
       console.error('Invalid report link:', error);
       return '';
     }
   };
 
-  // Create a chat session when the component mounts
   useEffect(() => {
-    if (isMounted.current) return; // Prevent duplicate calls
+    if (isMounted.current) return;
     isMounted.current = true;
 
     const createChatSession = async () => {
       try {
-        setIsTyping(true); // Show typing indicator before API call
-
+        setIsTyping(true);
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/chat/sessions/`);
         const { session_id, ai_response, custom_scenario } = response.data;
         setSessionId(session_id);
 
         if (custom_scenario) {
-          // Optional: Introduce a delay to simulate typing for system message
           setTimeout(() => {
             setMessages([
               {
@@ -76,12 +242,11 @@ const Chat = () => {
                 sender: 'system',
               },
             ]);
-            setIsTyping(false); // Hide typing indicator after setting the system message
-          }, 500); // 0.5-second delay for better UX
+            setIsTyping(false);
+          }, 500);
         }
 
         if (ai_response) {
-          // Optional: Introduce a delay to simulate typing for AI response
           setTimeout(() => {
             setMessages((prev) => [
               ...prev,
@@ -90,40 +255,31 @@ const Chat = () => {
                 sender: 'bot',
               },
             ]);
-            setIsTyping(false); // Hide typing indicator after setting the AI message
-          }, 1000); // 1-second delay
+            setIsTyping(false);
+          }, 1000);
         } else {
-          setIsTyping(false); // Hide typing indicator if no AI response
+          setIsTyping(false);
         }
       } catch (error) {
         console.error('Error creating chat session:', error);
-
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.error === 'Token has expired!'
-        ) {
-          // Handle token expiration
-          setSessionExpired(true); // Show session expiration dialog
-          logout(); // Log out the user from AuthContext
+        if (error.response?.data?.error === 'Token has expired!') {
+          setSessionExpired(true);
+          logout();
         } else {
           setErrorMessage('Failed to create chat session.');
           setOpenSnackbar(true);
         }
-
-        setIsTyping(false); // Ensure typing indicator is hidden on error
+        setIsTyping(false);
       }
     };
 
     createChatSession();
   }, [logout]);
 
-  // Auto-scroll to the latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Handle message send
   const handleSendMessage = async () => {
     if (!userMessage.trim()) return;
 
@@ -135,7 +291,7 @@ const Chat = () => {
 
     setMessages((prev) => [...prev, { message: userMessage, sender: 'user' }]);
     setUserMessage('');
-    setIsTyping(true); // Show typing indicator
+    setIsTyping(true);
 
     try {
       const response = await axios.post(
@@ -143,35 +299,21 @@ const Chat = () => {
         newMessage
       );
 
-      // Assuming the response contains ai_response and possibly evaluation
       const { ai_response, evaluation } = response.data;
 
       if (evaluation) {
-        // Extract the report link
         const { report_link } = evaluation;
         setReportLink(report_link || '');
-
-        // Add the AI response to messages
         setMessages((prev) => [...prev, { message: ai_response, sender: 'bot' }]);
-
-        // Show the evaluation modal
         setEvaluationModal(true);
-      } else {
-        if (ai_response) {
-          setMessages((prev) => [...prev, { message: ai_response, sender: 'bot' }]);
-        }
+      } else if (ai_response) {
+        setMessages((prev) => [...prev, { message: ai_response, sender: 'bot' }]);
       }
     } catch (error) {
       console.error('Error sending message:', error);
-
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.error === 'Token has expired!'
-      ) {
-        // Handle token expiration
-        setSessionExpired(true); // Show session expiration dialog
-        logout(); // Log out the user from AuthContext
+      if (error.response?.data?.error === 'Token has expired!') {
+        setSessionExpired(true);
+        logout();
       } else {
         setMessages((prev) => [
           ...prev,
@@ -181,13 +323,8 @@ const Chat = () => {
         setOpenSnackbar(true);
       }
     } finally {
-      setIsTyping(false); // Hide typing indicator
+      setIsTyping(false);
     }
-  };
-
-  // Handle closing the welcome modal
-  const handleCloseModal = () => {
-    setOpenModal(false);
   };
 
   return (
@@ -195,313 +332,215 @@ const Chat = () => {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh', // Keep height 100vh for full viewport
-        padding: 2,
+        height: '100vh',
+        padding: isSmallScreen ? 1 : 2,
         bgcolor: 'background.default',
+        background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
       }}
     >
-      {/* Session Expiration Dialog */}
-      <Dialog
+      <CustomDialog
         open={sessionExpired}
-        onClose={() => {}} // Prevent closing the dialog manually
-        aria-labelledby="session-expired-dialog-title"
-        aria-describedby="session-expired-dialog-description"
-      >
-        <DialogTitle id="session-expired-dialog-title">Session Expired</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="session-expired-dialog-description">
-            Your session has expired. Please login again.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
+        title="Session Expired"
+        content="Your session has expired. Please login again."
+        actions={
           <Button
             onClick={() => navigate('/login')}
-            color="primary"
             variant="contained"
-            autoFocus
-            aria-label="Redirect to Login Page"
+            sx={{
+              borderRadius: '30px',
+              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            }}
           >
             Go to Login
           </Button>
-        </DialogActions>
-      </Dialog>
+        }
+      />
 
-      {/* Evaluation Modal */}
-      <Dialog
+      <CustomDialog
         open={evaluationModal}
-        onClose={() => {}} // Prevent closing the dialog manually
-        aria-labelledby="evaluation-dialog-title"
-        aria-describedby="evaluation-dialog-description"
-      >
-        <DialogTitle id="evaluation-dialog-title">Report Card Generated</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="evaluation-dialog-description">
-            Your report card has been generated. Please click{' '}
+        title="Report Card Generated"
+        content={
+          <>
+            Your report card has been generated. Click below to view your performance or continue chatting.
             <Button
               onClick={() => {
-                setEvaluationModal(false); // Close the modal
+                setEvaluationModal(false);
                 if (reportLink) {
                   const sessionId = extractSessionIdFromLink(reportLink);
-                  if (sessionId) {
-                    navigate(`/report-cards/${sessionId}`);
-                  } else {
-                    navigate('/report-cards'); // Fallback to report cards list
-                  }
+                  navigate(sessionId ? `/report-cards/${sessionId}` : '/report-cards');
                 }
               }}
-              color="primary"
-              variant="text"
-              sx={{ textTransform: 'none', padding: 0 }}
+              sx={{
+                mt: 2,
+                display: 'block',
+                width: '100%',
+                borderRadius: '30px',
+                background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              }}
+              variant="contained"
             >
-              Report Cards
-            </Button>{' '}
-            to view your performance. You can continue chatting if you like, but your report will not be updated.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
+              View Report Card
+            </Button>
+          </>
+        }
+        actions={
           <Button
-            onClick={() => {
-              setEvaluationModal(false); // Close the modal
-            }}
-            color="primary"
-            variant="contained"
-            autoFocus
-            aria-label="Continue Chatting"
+            onClick={() => setEvaluationModal(false)}
+            variant="outlined"
+            sx={{ borderRadius: '30px' }}
           >
             Continue Chatting
           </Button>
-        </DialogActions>
-      </Dialog>
+        }
+      />
 
-      {/* Welcome Modal */}
-      <Dialog
+      <CustomDialog 
         open={openModal}
-        onClose={handleCloseModal}
-        aria-labelledby="welcome-dialog-title"
-        aria-describedby="welcome-dialog-description"
-      >
-        <DialogTitle id="welcome-dialog-title">Welcome to SocialFlow</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="welcome-dialog-description">
-            Hey! Welcome to SocialFlow. You are about to improve your social conversation skills.
-            Let's see how you fare in a real-life stimulated scenario. We are awaiting your result.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseModal} color="primary" aria-label="Start Chat">
-            Let's Go
+        title="Welcome to SocialFlow"
+        content={
+          <>
+            Welcome to SocialFlow! Get ready to enhance your social conversation skills through 
+            engaging real-life scenarios. Let's see how you handle different social situations 
+            and help you improve your communication abilities.
+          </>
+        }
+        actions={
+          <Button
+            onClick={() => setOpenModal(false)}
+            variant="contained"
+            sx={{
+              borderRadius: '30px',
+              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            }}
+          >
+            Let's Begin!
           </Button>
-        </DialogActions>
-      </Dialog>
+        }
+        onClose={() => setOpenModal(false)}
+      />
 
-      {/* Chat Messages */}
       <Paper
+        ref={chatContainerRef}
         elevation={3}
         sx={{
-          flex: 1, // Allows the Paper to grow and fill available space
+          flex: 1,
           overflowY: 'auto',
           padding: 2,
           marginBottom: 2,
-          borderRadius: 2,
+          borderRadius: 3,
           bgcolor: 'background.paper',
+          backgroundImage: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
         }}
       >
-        <Typography variant="h6" gutterBottom sx={{ textAlign: 'center' }}>
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{
+            textAlign: 'center',
+            fontWeight: 700,
+            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            mb: 3,
+          }}
+        >
           SocialFlow Chat
         </Typography>
-        <List>
-          {messages.map((msg, index) => {
-            switch (msg.sender) {
-              case 'system':
-                return (
-                  <ListItem key={index} sx={{ justifyContent: 'center', mb: 1 }}>
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        padding: 1,
-                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                        borderRadius: 2,
-                        maxWidth: '80%',
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary" align="center">
-                        {msg.message}
-                      </Typography>
-                    </Paper>
-                  </ListItem>
-                );
-              case 'user':
-                return (
-                  <ListItem
-                    key={index}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      mb: 1,
-                    }}
-                  >
-                    <Avatar sx={{ ml: 1 }}>👤</Avatar>
-                    <ListItemText
-                      primary={msg.message}
-                      sx={{
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        borderRadius: 2,
-                        padding: 1,
-                        maxWidth: '75%',
-                        wordWrap: 'break-word',
-                      }}
-                    />
-                  </ListItem>
-                );
-              case 'bot':
-                return (
-                  <ListItem
-                    key={index}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'flex-start',
-                      mb: 1,
-                    }}
-                  >
-                    <Avatar sx={{ mr: 1 }}>🤖</Avatar>
-                    <ListItemText
-                      primary={msg.message}
-                      sx={{
-                        bgcolor: 'grey.300',
-                        color: 'text.primary',
-                        borderRadius: 2,
-                        padding: 1,
-                        maxWidth: '75%',
-                        wordWrap: 'break-word',
-                      }}
-                    />
-                  </ListItem>
-                );
-              default:
-                return null;
-            }
-          })}
-
-          {/* Typing Indicator */}
-          {isTyping && (
-            <ListItem sx={{ justifyContent: 'flex-start', mb: 1 }}>
-              <Avatar sx={{ mr: 1 }}>🤖</Avatar>
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Typography variant="body1" sx={{ mr: 1 }}>
-                      AI is typing
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          bgcolor: 'grey.500',
-                          borderRadius: '50%',
-                          mr: 0.5,
-                          animation: 'bounce 1.4s infinite ease-in-out both',
-                          '@keyframes bounce': {
-                            '0%, 80%, 100%': { transform: 'scale(0)' },
-                            '40%': { transform: 'scale(1)' },
-                          },
-                        }}
-                      />
-                      <Box
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          bgcolor: 'grey.500',
-                          borderRadius: '50%',
-                          mr: 0.5,
-                          animation: 'bounce 1.4s infinite ease-in-out both',
-                          animationDelay: '0.2s',
-                          '@keyframes bounce': {
-                            '0%, 80%, 100%': { transform: 'scale(0)' },
-                            '40%': { transform: 'scale(1)' },
-                          },
-                        }}
-                      />
-                      <Box
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          bgcolor: 'grey.500',
-                          borderRadius: '50%',
-                          animation: 'bounce 1.4s infinite ease-in-out both',
-                          animationDelay: '0.4s',
-                          '@keyframes bounce': {
-                            '0%, 80%, 100%': { transform: 'scale(0)' },
-                            '40%': { transform: 'scale(1)' },
-                          },
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                }
-                sx={{
-                  bgcolor: 'grey.300',
-                  color: 'text.primary',
-                  borderRadius: 2,
-                  padding: 1,
-                  maxWidth: '75%',
-                }}
-              />
-            </ListItem>
-          )}
-        </List>
+        
+        <MessageList messages={messages} isTyping={isTyping} theme={theme} />
         <div ref={messagesEndRef} />
       </Paper>
 
-      {/* Message Input */}
-      <Box
+      <Paper
+        component="form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSendMessage();
+        }}
         sx={{
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          padding: 1,
+          p: 1,
+          borderRadius: 3,
           bgcolor: 'background.paper',
           boxShadow: '0 -1px 4px rgba(0, 0, 0, 0.1)',
-          borderRadius: 2,
         }}
       >
         <TextField
-          fullWidth
+          sx={{ flex: 1 }}
           variant="outlined"
-          size="small"
+          size="medium"
           placeholder="Type your message..."
           value={userMessage}
           onChange={(e) => setUserMessage(e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault(); // Prevent newline
-              handleSendMessage();
-            }
+          disabled={isTyping}
+          InputProps={{
+            sx: {
+              borderRadius: '30px',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'transparent',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.primary.main,
+                borderWidth: '1px',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.primary.main,
+                borderWidth: '2px',
+              },
+              bgcolor: 'background.default',
+            },
           }}
-          disabled={isTyping} // Disable input when AI is typing
-          aria-label="Type your message"
         />
-        <Button
-          variant="contained"
-          color="primary"
+        <IconButton
           onClick={handleSendMessage}
-          sx={{ minWidth: 'auto', padding: '8px 16px' }}
-          disabled={isTyping || !userMessage.trim()} // Disable send when AI is typing or message is empty
-          aria-label="Send message"
+          disabled={isTyping || !userMessage.trim()}
+          sx={{
+            flexShrink: 0,
+            bgcolor: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            color: 'white',
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            // Force the nested icon to have white fill.
+            '& .MuiSvgIcon-root': {
+              fill: 'white !important',
+            },
+            '&:hover': {
+              bgcolor: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
+              transform: 'scale(1.05)',
+            },
+            '&:disabled': {
+              bgcolor: 'grey.300',
+              color: 'grey.500',
+            },
+            transition: 'all 0.2s ease-in-out',
+          }}
         >
-          Send
-        </Button>
-      </Box>
+          <Send />
+        </IconButton>
+      </Paper>
 
-      {/* Snackbar for Error Messages */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}
         onClose={() => setOpenSnackbar(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setOpenSnackbar(false)} severity="error" sx={{ width: '100%' }}>
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity="error"
+          sx={{
+            width: '100%',
+            borderRadius: 2,
+            bgcolor: theme.palette.error.main,
+            color: 'white',
+            '& .MuiAlert-icon': {
+              color: 'white',
+            },
+          }}
+        >
           {errorMessage}
         </Alert>
       </Snackbar>

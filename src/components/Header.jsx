@@ -21,18 +21,21 @@ const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Define navigation items
-  const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Chat', path: '/chat' },
-  ];
+  // Define navigation items based on authentication status.
+  // For unauthenticated users, "Chat" has been removed.
+  const navItems = user
+    ? [
+        { name: 'Platform', path: '/platform' },
+        { name: 'Evaluate', path: '/evaluate' },
+        { name: 'Report Cards', path: '/report-cards' },
+        { name: 'About', path: '/about' },
+      ]
+    : [
+        { name: 'Home', path: '/' },
+        { name: 'About', path: '/about' },
+      ];
 
-  // Add Report Cards to navItems if user is authenticated
-  if (user) {
-    navItems.push({ name: 'Report Cards', path: '/report-cards' });
-  }
-
-  // Define authentication items
+  // Define authentication items.
   const authItems = user
     ? [
         {
@@ -114,11 +117,7 @@ const Header = () => {
                   {item.name}
                 </Button>
               ) : (
-                <Button
-                  key={item.name}
-                  color="inherit"
-                  onClick={item.action}
-                >
+                <Button key={item.name} color="inherit" onClick={item.action}>
                   {item.name}
                 </Button>
               )

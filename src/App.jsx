@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -9,18 +8,25 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Chat from './components/Chat';
 import ReportCards from './components/ReportCards';
-import ReportCardDetail from './components/ReportCardDetail'; // Import the new component
-
+import ReportCardDetail from './components/ReportCardDetail';
+import PlatformPage from './components/PlatformPage';
+import Categories from './components/Categories';
+import Subcategories from './components/Subcategories';
+import Lessons from './components/Lessons';
+import LearnMore from './components/About';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TOS';
+import LessonDetail from './components/LessonDetail/LessonDetail';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
 };
 
-// Guest Route Component to prevent authenticated users from accessing login/register
+// Guest Route Component
 const GuestRoute = ({ children }) => {
   const { user } = useAuth();
-  return !user ? children : <Navigate to="/chat" />;
+  return !user ? children : <Navigate to="/platform" />;
 };
 
 function App() {
@@ -48,6 +54,22 @@ function App() {
               }
             />
             <Route
+              path="/platform"
+              element={
+                <ProtectedRoute>
+                  <PlatformPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                
+                  <LearnMore />
+                
+              }
+            />
+            <Route
               path="/chat"
               element={
                 <ProtectedRoute>
@@ -71,7 +93,54 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Redirect any unknown routes to LandingPage */}
+            <Route
+              path="/training/:categoryId"
+              element={
+                <ProtectedRoute>
+                  <Categories />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/training/subcategories/:categoryId"
+              element={
+                <ProtectedRoute>
+                  <Subcategories />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/training/lessons/:subcategoryId"
+              element={
+                <ProtectedRoute>
+                  <Lessons />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/training/lessondetail/:lessonId"
+              element={
+                <ProtectedRoute>
+                  <LessonDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                
+                  < PrivacyPolicy />
+                
+              }
+            />
+            <Route
+              path="/terms"
+              element={
+                
+                  <TermsOfService />
+                
+              }
+            />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Suspense>
