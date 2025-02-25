@@ -20,35 +20,51 @@ import {
   useMediaQuery,
   IconButton,
   Fade,
+  Zoom,
+  Tooltip,
+  CircularProgress,
 } from '@mui/material';
-import { Send, EmojiEmotions, Psychology, School } from '@mui/icons-material';
+import { Send, EmojiEmotions, Psychology, School, Info } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-// MessageBubble is memoized so it only re-renders if its props change.
+// Enhanced MessageBubble with improved animations and visual polish
 const MessageBubble = React.memo(({ message, sender, theme }) => {
   const isUser = sender === 'user';
+  const [visible, setVisible] = useState(false);
+  
+  useEffect(() => {
+    // Small delay for staggered animation effect
+    const timer = setTimeout(() => setVisible(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <Fade in={true} timeout={500}>
+    <Zoom in={visible} timeout={400}>
       <ListItem
         sx={{
           display: 'flex',
           justifyContent: isUser ? 'flex-end' : 'flex-start',
-          mb: 1,
+          mb: 1.5,
           alignItems: 'flex-start',
+          padding: '4px 8px',
         }}
       >
         {!isUser && (
           <Avatar
             sx={{
-              mr: 1,
+              mr: 1.5,
               bgcolor: sender === 'bot' ? theme.palette.primary.main : 'grey.300',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
               animation: sender === 'bot' ? 'pulse 2s infinite' : 'none',
               '@keyframes pulse': {
                 '0%': { boxShadow: '0 0 0 0 rgba(0, 0, 0, 0.2)' },
                 '70%': { boxShadow: '0 0 0 10px rgba(0, 0, 0, 0)' },
                 '100%': { boxShadow: '0 0 0 0 rgba(0, 0, 0, 0)' },
+              },
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.1)',
               },
             }}
           >
@@ -56,60 +72,58 @@ const MessageBubble = React.memo(({ message, sender, theme }) => {
           </Avatar>
         )}
         <Paper
-          elevation={2}
+          elevation={3}
           sx={{
-            padding: 1.5,
-            // For user messages use a gradient, for non-user use a light grey.
-            bgcolor: isUser
-              ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+            padding: 2,
+            // Enhanced gradients for more visual interest
+            background: isUser
+              ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
               : sender === 'system'
-              ? theme.palette.background.default
-              : theme.palette.grey[200],
-            // For non-user messages, we force a contrasting text color using getContrastText.
+              ? `linear-gradient(to right, ${theme.palette.background.default}, ${theme.palette.background.paper})`
+              : theme.palette.grey[100],
             color: isUser
               ? 'white'
-              : theme.palette.getContrastText(theme.palette.grey[200]),
-            borderRadius: 2,
+              : theme.palette.getContrastText(theme.palette.grey[100]),
+            borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
             maxWidth: '75%',
             position: 'relative',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              width: 0,
-              height: 0,
-              borderStyle: 'solid',
-              ...(isUser
-                ? {
-                    right: -8,
-                    borderWidth: '8px 0 8px 8px',
-                    borderColor: `transparent transparent transparent ${theme.palette.primary.main}`,
-                  }
-                : {
-                    left: -8,
-                    borderWidth: '8px 8px 8px 0',
-                    borderColor: `transparent ${
-                      sender === 'system'
-                        ? theme.palette.background.default
-                        : theme.palette.grey[200]
-                    } transparent transparent`,
-                  }),
+            boxShadow: isUser 
+              ? '0 4px 12px rgba(0,0,0,0.15)' 
+              : '0 2px 8px rgba(0,0,0,0.08)',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+              transform: 'translateY(-2px)',
             },
           }}
         >
-          {/* Render as a div to avoid nested <p> issues */}
-          <Typography variant="body1" component="div">
+          <Typography 
+            variant="body1" 
+            component="div"
+            sx={{
+              lineHeight: 1.6,
+              fontSize: '1rem',
+              fontWeight: sender === 'system' ? 500 : 400,
+            }}
+          >
             {message}
           </Typography>
         </Paper>
         {isUser && (
           <Avatar
             sx={{
-              ml: 1,
+              ml: 1.5,
               bgcolor: theme.palette.secondary.main,
-              animation: 'fadeIn 0.3s ease-in',
-              '@keyframes fadeIn': {
-                '0%': { opacity: 0 },
-                '100%': { opacity: 1 },
+              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+              animation: 'fadeInWithBounce 0.4s ease-out',
+              '@keyframes fadeInWithBounce': {
+                '0%': { opacity: 0, transform: 'scale(0.8)' },
+                '70%': { opacity: 1, transform: 'scale(1.1)' },
+                '100%': { opacity: 1, transform: 'scale(1)' },
+              },
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.1)',
               },
             }}
           >
@@ -117,76 +131,98 @@ const MessageBubble = React.memo(({ message, sender, theme }) => {
           </Avatar>
         )}
       </ListItem>
-    </Fade>
+    </Zoom>
   );
 });
 
-// MessageList is extracted and memoized so that updates to the input field won't force re-rendering of the chat history.
-const MessageList = React.memo(({ messages, isTyping, theme }) => (
-  <List>
-    {messages.map((msg, index) => (
-      <MessageBubble key={index} message={msg.message} sender={msg.sender} theme={theme} />
-    ))}
-    {isTyping && (
-      <MessageBubble
-        key="typing"
-        message={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography component="div">Typing</Typography>
-            {[0, 1, 2].map((i) => (
-              <Box
-                key={i}
-                sx={{
-                  width: 6,
-                  height: 6,
-                  bgcolor: theme.palette.primary.main,
-                  borderRadius: '50%',
-                  animation: 'bounce 1.4s infinite ease-in-out both',
-                  animationDelay: `${i * 0.16}s`,
-                  '@keyframes bounce': {
-                    '0%, 80%, 100%': { transform: 'scale(0)' },
-                    '40%': { transform: 'scale(1)' },
-                  },
-                }}
-              />
-            ))}
-          </Box>
-        }
-        sender="bot"
-        theme={theme}
-      />
-    )}
-  </List>
-));
+// Enhanced MessageList with day dividers and improved animations
+const MessageList = React.memo(({ messages, isTyping, theme }) => {
+  
+  // Render typing indicator with enhanced animation
+  const renderTypingIndicator = () => (
+    <MessageBubble
+      key="typing"
+      message={
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography component="div" sx={{ fontSize: '0.9rem', opacity: 0.9 }}>
+            Thinking
+          </Typography>
+          {[0, 1, 2].map((i) => (
+            <Box
+              key={i}
+              sx={{
+                width: 8,
+                height: 8,
+                bgcolor: theme.palette.primary.main,
+                borderRadius: '50%',
+                animation: 'bounce 1.4s infinite ease-in-out both',
+                animationDelay: `${i * 0.16}s`,
+                '@keyframes bounce': {
+                  '0%, 80%, 100%': { transform: 'translateY(0)' },
+                  '40%': { transform: 'translateY(-10px)' },
+                },
+              }}
+            />
+          ))}
+        </Box>
+      }
+      sender="bot"
+      theme={theme}
+    />
+  );
+  
+  return (
+    <List sx={{ width: '100%' }}>
+      {messages.map((msg, index) => (
+        <MessageBubble 
+          key={index} 
+          message={msg.message} 
+          sender={msg.sender} 
+          theme={theme} 
+        />
+      ))}
+      {isTyping && renderTypingIndicator()}
+    </List>
+  );
+});
 
+// Enhanced dialog with better visuals and animation
 const CustomDialog = ({ open, title, content, actions, onClose }) => {
   const theme = useTheme();
   return (
     <Dialog
       open={open}
       onClose={onClose}
+      TransitionComponent={Zoom}
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: 4,
+          overflow: 'hidden',
           bgcolor: 'background.paper',
           backgroundImage: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+          boxShadow: '0 12px 24px rgba(0,0,0,0.2)',
+          maxWidth: '90vw',
+          width: '450px',
         },
       }}
     >
       <DialogTitle
         sx={{
+          position: 'relative',
+          pb: 1,
           background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
+          color: 'white',
           fontWeight: 700,
+          textAlign: 'center',
+          fontSize: '1.3rem',
         }}
       >
         {title}
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ mt: 2, px: 3 }}>
         <DialogContentText sx={{ color: 'text.primary' }}>{content}</DialogContentText>
       </DialogContent>
-      <DialogActions sx={{ p: 2 }}>{actions}</DialogActions>
+      <DialogActions sx={{ p: 3, pt: 1, justifyContent: 'center' }}>{actions}</DialogActions>
     </Dialog>
   );
 };
@@ -207,6 +243,7 @@ const Chat = () => {
   const [sessionExpired, setSessionExpired] = useState(false);
   const [evaluationModal, setEvaluationModal] = useState(false);
   const [reportLink, setReportLink] = useState('');
+  const [isBottom, setIsBottom] = useState(true);
 
   const isMounted = useRef(false);
   const messagesEndRef = useRef(null);
@@ -242,7 +279,6 @@ const Chat = () => {
                 sender: 'system',
               },
             ]);
-            setIsTyping(false);
           }, 500);
         }
 
@@ -277,8 +313,25 @@ const Chat = () => {
   }, [logout]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (isBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isBottom]);
+
+  // Handle scroll detection
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+      setIsBottom(isAtBottom);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSendMessage = async () => {
     if (!userMessage.trim()) return;
@@ -292,6 +345,7 @@ const Chat = () => {
     setMessages((prev) => [...prev, { message: userMessage, sender: 'user' }]);
     setUserMessage('');
     setIsTyping(true);
+    setIsBottom(true); // Force scroll to bottom when sending message
 
     try {
       const response = await axios.post(
@@ -327,6 +381,34 @@ const Chat = () => {
     }
   };
 
+  // Scroll to bottom button
+  const ScrollToBottomButton = () => (
+    <Zoom in={!isBottom}>
+      <IconButton
+        onClick={() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          setIsBottom(true);
+        }}
+        sx={{
+          position: 'absolute',
+          bottom: 20,
+          right: 20,
+          zIndex: 10,
+          bgcolor: theme.palette.primary.main,
+          color: 'white',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+          '&:hover': {
+            bgcolor: theme.palette.primary.dark,
+            transform: 'scale(1.1)',
+          },
+          transition: 'all 0.2s ease',
+        }}
+      >
+        <Send sx={{ transform: 'rotate(-90deg)' }} />
+      </IconButton>
+    </Zoom>
+  );
+
   return (
     <Box
       sx={{
@@ -349,6 +431,16 @@ const Chat = () => {
             sx={{
               borderRadius: '30px',
               background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              textTransform: 'none',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+              '&:hover': {
+                boxShadow: '0 6px 12px rgba(0,0,0,0.25)',
+                transform: 'translateY(-2px)',
+              },
+              transition: 'all 0.2s ease',
             }}
           >
             Go to Login
@@ -361,7 +453,12 @@ const Chat = () => {
         title="Report Card Generated"
         content={
           <>
-            Your report card has been generated. Click below to view your performance or continue chatting.
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <School sx={{ fontSize: 60, color: theme.palette.primary.main, opacity: 0.9 }} />
+            </Box>
+            <Typography variant="body1" sx={{ textAlign: 'center', mb: 2 }}>
+              Your report card has been generated. Click below to view your performance or continue chatting.
+            </Typography>
             <Button
               onClick={() => {
                 setEvaluationModal(false);
@@ -376,6 +473,15 @@ const Chat = () => {
                 width: '100%',
                 borderRadius: '30px',
                 background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                py: 1.2,
+                fontWeight: 600,
+                textTransform: 'none',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+                '&:hover': {
+                  boxShadow: '0 6px 12px rgba(0,0,0,0.25)',
+                  transform: 'translateY(-2px)',
+                },
+                transition: 'all 0.2s ease',
               }}
               variant="contained"
             >
@@ -387,7 +493,11 @@ const Chat = () => {
           <Button
             onClick={() => setEvaluationModal(false)}
             variant="outlined"
-            sx={{ borderRadius: '30px' }}
+            sx={{ 
+              borderRadius: '30px',
+              px: 3,
+              textTransform: 'none',
+            }}
           >
             Continue Chatting
           </Button>
@@ -399,9 +509,14 @@ const Chat = () => {
         title="Welcome to SocialFlow"
         content={
           <>
-            Welcome to SocialFlow! Get ready to enhance your social conversation skills through 
-            engaging real-life scenarios. Let's see how you handle different social situations 
-            and help you improve your communication abilities.
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+              <Psychology sx={{ fontSize: 60, color: theme.palette.primary.main, opacity: 0.8 }} />
+            </Box>
+            <Typography variant="body1" sx={{ textAlign: 'center' }}>
+              Welcome to SocialFlow! Get ready to enhance your social conversation skills through 
+              engaging real-life scenarios. Let's see how you handle different social situations 
+              and help you improve your communication abilities.
+            </Typography>
           </>
         }
         actions={
@@ -411,6 +526,17 @@ const Chat = () => {
             sx={{
               borderRadius: '30px',
               background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              px: 4,
+              py: 1.2,
+              fontSize: '1rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+              '&:hover': {
+                boxShadow: '0 6px 12px rgba(0,0,0,0.25)',
+                transform: 'translateY(-2px)',
+              },
+              transition: 'all 0.2s ease',
             }}
           >
             Let's Begin!
@@ -420,106 +546,184 @@ const Chat = () => {
       />
 
       <Paper
-        ref={chatContainerRef}
-        elevation={3}
-        sx={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: 2,
-          marginBottom: 2,
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-          backgroundImage: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
-        }}
-      >
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{
-            textAlign: 'center',
-            fontWeight: 700,
-            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            mb: 3,
-          }}
-        >
-          SocialFlow Chat
-        </Typography>
-        
-        <MessageList messages={messages} isTyping={isTyping} theme={theme} />
-        <div ref={messagesEndRef} />
-      </Paper>
-
-      <Paper
-        component="form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSendMessage();
-        }}
+        elevation={5}
         sx={{
           display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          p: 1,
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-          boxShadow: '0 -1px 4px rgba(0, 0, 0, 0.1)',
+          flexDirection: 'column',
+          width: '100%',
+          flexGrow: 1,
+          borderRadius: 4,
+          overflow: 'hidden',
+          boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
         }}
       >
-        <TextField
-          sx={{ flex: 1 }}
-          variant="outlined"
-          size="medium"
-          placeholder="Type your message..."
-          value={userMessage}
-          onChange={(e) => setUserMessage(e.target.value)}
-          disabled={isTyping}
-          InputProps={{
-            sx: {
-              borderRadius: '30px',
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'transparent',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme.palette.primary.main,
-                borderWidth: '1px',
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme.palette.primary.main,
-                borderWidth: '2px',
-              },
-              bgcolor: 'background.default',
-            },
-          }}
-        />
-        <IconButton
-          onClick={handleSendMessage}
-          disabled={isTyping || !userMessage.trim()}
+        {/* Header */}
+        <Box
           sx={{
-            flexShrink: 0,
-            bgcolor: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            p: 2,
+            backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
             color: 'white',
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            // Force the nested icon to have white fill.
-            '& .MuiSvgIcon-root': {
-              fill: 'white !important',
-            },
-            '&:hover': {
-              bgcolor: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
-              transform: 'scale(1.05)',
-            },
-            '&:disabled': {
-              bgcolor: 'grey.300',
-              color: 'grey.500',
-            },
-            transition: 'all 0.2s ease-in-out',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
           }}
         >
-          <Send />
-        </IconButton>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              textAlign: 'center',
+              position: 'relative',
+              display: 'inline-block',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -8,
+                left: '25%',
+                width: '50%',
+                height: 3,
+                backgroundColor: 'white',
+                borderRadius: 2,
+              },
+            }}
+          >
+            SocialFlow Chat
+          </Typography>
+          <Tooltip title="Practice your social communication skills">
+            <IconButton 
+              size="small" 
+              sx={{ 
+                color: 'white',
+                ml: 1,
+                opacity: 0.8,
+                '&:hover': { opacity: 1 }
+              }}
+            >
+              <Info fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+        
+        {/* Chat Area */}
+        <Box
+          ref={chatContainerRef}
+          sx={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: isSmallScreen ? 1 : 2,
+            backgroundImage: `radial-gradient(circle at center, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+            position: 'relative',
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: theme.palette.background.default,
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: `${theme.palette.primary.main}80`,
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: theme.palette.primary.main,
+            },
+          }}
+        >
+          <MessageList messages={messages} isTyping={isTyping} theme={theme} />
+          <div ref={messagesEndRef} />
+          <ScrollToBottomButton />
+        </Box>
+        
+        {/* Input Area */}
+        <Paper
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSendMessage();
+          }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            p: 1.5,
+            borderTop: `1px solid ${theme.palette.divider}`,
+            bgcolor: theme.palette.background.paper,
+            boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.05)',
+          }}
+          elevation={0}
+        >
+          <TextField
+            sx={{ flex: 1 }}
+            variant="outlined"
+            size="medium"
+            placeholder={isTyping ? "Wait for response..." : "Type your message..."}
+            value={userMessage}
+            onChange={(e) => setUserMessage(e.target.value)}
+            disabled={isTyping}
+            InputProps={{
+              sx: {
+                borderRadius: '30px',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'transparent',
+                  transition: 'all 0.2s ease',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: theme.palette.primary.main,
+                  borderWidth: '1px',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: theme.palette.primary.main,
+                  borderWidth: '2px',
+                },
+                bgcolor: 'background.default',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+              },
+            }}
+          />
+          {isTyping ? (
+            <Box 
+              sx={{
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                width: 48,
+                height: 48,
+              }}
+            >
+              <CircularProgress size={24} color="primary" />
+            </Box>
+          ) : (
+            <Tooltip title="Send message">
+              <IconButton
+                onClick={handleSendMessage}
+                disabled={!userMessage.trim()}
+                sx={{
+                  flexShrink: 0,
+                  backgroundImage: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  color: 'white',
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  '& .MuiSvgIcon-root': {
+                    fill: 'white !important',
+                  },
+                  '&:hover': {
+                    backgroundImage: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
+                    transform: 'scale(1.05)',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                  },
+                  '&:disabled': {
+                    bgcolor: 'grey.300',
+                    color: 'grey.500',
+                  },
+                  transition: 'all 0.2s ease-in-out',
+                }}
+              >
+                <Send />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Paper>
       </Paper>
 
       <Snackbar
@@ -527,18 +731,16 @@ const Chat = () => {
         autoHideDuration={6000}
         onClose={() => setOpenSnackbar(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        TransitionComponent={Fade}
       >
         <Alert
           onClose={() => setOpenSnackbar(false)}
           severity="error"
+          variant="filled"
           sx={{
             width: '100%',
-            borderRadius: 2,
-            bgcolor: theme.palette.error.main,
-            color: 'white',
-            '& .MuiAlert-icon': {
-              color: 'white',
-            },
+            borderRadius: 8,
+            fontWeight: 500,
           }}
         >
           {errorMessage}

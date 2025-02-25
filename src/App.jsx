@@ -6,7 +6,7 @@ import Footer from './components/Footer';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import Register from './components/Register';
-import Chat from './components/Chat';
+import Chat from './components/Chat/Chat';
 import ReportCards from './components/ReportCards';
 import ReportCardDetail from './components/ReportCardDetail';
 import PlatformPage from './components/PlatformPage';
