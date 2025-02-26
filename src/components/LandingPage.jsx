@@ -70,7 +70,8 @@ const LandingPage = () => {
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
-          pt: isSmallScreen ? 4 : 0,
+          // pt: isSmallScreen ? 4 : 0,
+          pt: { xs: 4, md: 8 },
           '&::before': {
             content: '""',
             position: 'absolute',
