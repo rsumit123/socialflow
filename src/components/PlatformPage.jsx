@@ -20,7 +20,7 @@ const LockedModal = ({ open, onDismiss }) => {
 
   // If user clicks "Go to Evaluate," navigate immediately.
   const handleEvaluate = () => {
-    navigate('/evaluate');
+    navigate('/chat');
   };
 
   // The outer overlay (dark background) closes the modal and calls onDismiss.

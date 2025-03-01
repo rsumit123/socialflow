@@ -14,7 +14,7 @@ import {
   Zoom,
   Tooltip,
 } from '@mui/material';
-import { Send, Psychology, School, Info } from '@mui/icons-material';
+import { Send, Psychology, School, Info, ExitToApp } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -41,6 +41,9 @@ const Chat = () => {
   const [evaluationModal, setEvaluationModal] = useState(false);
   const [reportLink, setReportLink] = useState('');
   const [isBottom, setIsBottom] = useState(true);
+  const [motivationSnackbarOpen, setMotivationSnackbarOpen] = useState(false);
+  const [motivationMessage, setMotivationMessage] = useState('');
+  const [endChatDialogOpen, setEndChatDialogOpen] = useState(false);
 
   const isMounted = useRef(false);
   const messagesEndRef = useRef(null);
@@ -57,6 +60,7 @@ const Chat = () => {
     }
   };
 
+  // Create new chat session
   useEffect(() => {
     if (isMounted.current) return;
     isMounted.current = true;
@@ -109,6 +113,7 @@ const Chat = () => {
     createChatSession();
   }, [logout]);
 
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (isBottom) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -130,19 +135,30 @@ const Chat = () => {
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSendMessage = async () => {
-    if (!userMessage.trim()) return;
+  // Show motivational message every 3 user messages (if below 10)
+  useEffect(() => {
+    const userMsgCount = messages.filter((msg) => msg.sender === 'user').length;
+    if (userMsgCount > 0 && userMsgCount < 10 && userMsgCount % 3 === 0) {
+      setMotivationMessage(`You are doing good. Keep going for ${10 - userMsgCount} more messages!`);
+      setMotivationSnackbarOpen(true);
+    }
+  }, [messages]);
+
+  // Updated send message function to optionally accept a custom message
+  const handleSendMessage = async (customMessage) => {
+    const messageToSend = customMessage !== undefined ? customMessage : userMessage;
+    if (!messageToSend.trim()) return;
 
     const newMessage = {
       session_id: sessionId,
-      message: userMessage,
+      message: messageToSend,
       sender: 'user',
     };
 
-    setMessages((prev) => [...prev, { message: userMessage, sender: 'user' }]);
-    setUserMessage('');
+    setMessages((prev) => [...prev, { message: messageToSend, sender: 'user' }]);
+    if (customMessage === undefined) setUserMessage('');
     setIsTyping(true);
-    setIsBottom(true); // Force scroll to bottom when sending message
+    setIsBottom(true);
 
     try {
       const response = await axios.post(
@@ -340,6 +356,49 @@ const Chat = () => {
     />
   );
 
+  // Render End Chat confirmation dialog
+  const renderEndChatDialog = () => (
+    <CustomDialog
+      open={endChatDialogOpen}
+      title="End Chat"
+      content="You are about to end this chat abruptly, and generate report. Do you want to continue?"
+      actions={
+        <>
+          <Button
+            onClick={() => {
+              setEndChatDialogOpen(false);
+              handleSendMessage("end this chat");
+            }}
+            variant="contained"
+            sx={{
+              backgroundColor: theme.palette.error.main,
+              '&:hover': { backgroundColor: theme.palette.error.dark },
+              borderRadius: '30px',
+              px: 3,
+              py: 1,
+              textTransform: 'none'
+            }}
+          >
+            Yes, End Chat
+          </Button>
+          <Button
+            onClick={() => setEndChatDialogOpen(false)}
+            variant="outlined"
+            sx={{
+              ml: 2,
+              borderRadius: '30px',
+              px: 3,
+              py: 1,
+              textTransform: 'none'
+            }}
+          >
+            Cancel
+          </Button>
+        </>
+      }
+    />
+  );
+
   return (
     <Box
       sx={{
@@ -355,6 +414,7 @@ const Chat = () => {
       {renderSessionExpiredDialog()}
       {renderEvaluationModal()}
       {renderWelcomeModal()}
+      {renderEndChatDialog()}
 
       <Paper
         elevation={5}
@@ -368,7 +428,7 @@ const Chat = () => {
           boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
         }}
       >
-        {/* Header */}
+        {/* Header with End Chat Icon */}
         <Box
           sx={{
             p: 2,
@@ -376,42 +436,54 @@ const Chat = () => {
             color: 'white',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             borderBottom: '1px solid rgba(255,255,255,0.1)',
           }}
         >
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 700,
-              textAlign: 'center',
-              position: 'relative',
-              display: 'inline-block',
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                bottom: -8,
-                left: '25%',
-                width: '50%',
-                height: 3,
-                backgroundColor: 'white',
-                borderRadius: 2,
-              },
-            }}
-          >
-            SocialFlow Chat
-          </Typography>
-          <Tooltip title="Practice your social communication skills">
-            <IconButton 
-              size="small" 
-              sx={{ 
-                color: 'white',
-                ml: 1,
-                opacity: 0.8,
-                '&:hover': { opacity: 1 }
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 700,
+                textAlign: 'center',
+                position: 'relative',
+                display: 'inline-block',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  bottom: -8,
+                  left: '25%',
+                  width: '50%',
+                  height: 3,
+                  backgroundColor: 'white',
+                  borderRadius: 2,
+                },
               }}
             >
-              <Info fontSize="small" />
+              Evaluation
+            </Typography>
+            <Tooltip title="Practice your social communication skills">
+              <IconButton 
+                size="small" 
+                sx={{ 
+                  color: 'white',
+                  ml: 1,
+                  opacity: 0.8,
+                  '&:hover': { opacity: 1 }
+                }}
+              >
+                <Info fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Tooltip title="End Chat">
+            <IconButton
+              onClick={() => setEndChatDialogOpen(true)}
+              sx={{
+                color: theme.palette.error.main,
+              }}
+            >
+              <ExitToApp />
             </IconButton>
           </Tooltip>
         </Box>
@@ -449,11 +521,12 @@ const Chat = () => {
         <ChatInput 
           value={userMessage} 
           onChange={setUserMessage} 
-          onSend={handleSendMessage} 
+          onSend={() => handleSendMessage()} 
           isTyping={isTyping} 
         />
       </Paper>
 
+      {/* Error Snackbar */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}
@@ -472,6 +545,27 @@ const Chat = () => {
           }}
         >
           {errorMessage}
+        </Alert>
+      </Snackbar>
+
+      {/* Motivational Snackbar */}
+      <Snackbar
+        open={motivationSnackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setMotivationSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setMotivationSnackbarOpen(false)}
+          severity="info"
+          variant="filled"
+          sx={{
+            width: '100%',
+            borderRadius: 8,
+            fontWeight: 500,
+          }}
+        >
+          {motivationMessage}
         </Alert>
       </Snackbar>
     </Box>
