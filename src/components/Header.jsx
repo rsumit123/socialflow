@@ -48,7 +48,7 @@ const Header = (props) => {
   const navItems = user
     ? [
         { name: 'Platform', path: '/platform' },
-        { name: 'Evaluate', path: '/evaluate' },
+        { name: 'Evaluate', path: '/chat' },
         { name: 'Report Cards', path: '/report-cards' },
         { name: 'About', path: '/about' },
       ]
