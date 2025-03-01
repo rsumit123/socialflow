@@ -11,7 +11,7 @@ import ReportCards from './components/ReportCards';
 import ReportCardDetail from './components/ReportCardDetail';
 import PlatformPage from './components/PlatformPage';
 import Categories from './components/Categories';
-import Subcategories from './components/Subcategories';
+import Subcategories from './components/SubCategories';
 import Lessons from './components/Lessons';
 import LearnMore from './components/About';
 import PrivacyPolicy from './components/PrivacyPolicy';

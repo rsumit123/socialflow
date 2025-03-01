@@ -18,7 +18,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { handleAuthErrors } from '../Api';
 
-const Subcategories = () => {
+const SubCategories = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -176,4 +176,4 @@ const Subcategories = () => {
   );
 };
 
-export default Subcategories;
+export default SubCategories;
