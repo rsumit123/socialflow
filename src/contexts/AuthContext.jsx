@@ -43,10 +43,10 @@ export const AuthProvider = ({ children }) => {
         email,
         password
       });
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        setUser({ email, token: response.data.token });
-        return response.data;
+      if (response.data) {
+        localStorage.setItem('token', response.data.session.access_token);
+        setUser({ email, token: response.data.session.access_token });
+        return response.data; // Optional: return data in case it needs to be used
       }
     } catch (error) {
       console.error('Registration failed:', error);
@@ -57,9 +57,9 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login/`, { email, password });
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        setUser({ email, token: response.data.token });
+      if (response.data) {
+        localStorage.setItem('token', response.data.session.access_token);
+        setUser({ email, token: response.data.session.access_token });
       }
     } catch (error) {
       console.error('Authentication failed:', error);
@@ -70,11 +70,11 @@ export const AuthProvider = ({ children }) => {
   // New guestLogin function
   const guestLogin = async () => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/guest/`);
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/guest_login/`);
+      if (response.data) {
+        localStorage.setItem('token', response.data.session.access_token);
         // Optionally, you can update user state with additional info if returned by your endpoint.
-        setUser({ token: response.data.token });
+        setUser({ token: response.data.session.access_token });
       }
     } catch (error) {
       console.error('Guest login failed:', error);

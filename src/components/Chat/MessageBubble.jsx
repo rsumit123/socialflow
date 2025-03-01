@@ -1,0 +1,122 @@
+import React, { useState, useEffect } from 'react';
+import { ListItem, Avatar, Paper, Typography, Box, Zoom, useTheme } from '@mui/material';
+import { EmojiEmotions, Psychology, School } from '@mui/icons-material';
+
+// MessageBubble component for rendering individual chat messages
+const MessageBubble = React.memo(({ message, sender, delayAnimation = true }) => {
+  const theme = useTheme();
+  const isUser = sender === 'user';
+  const [visible, setVisible] = useState(!delayAnimation);
+  
+  useEffect(() => {
+    if (delayAnimation) {
+      // Small delay for staggered animation effect
+      const timer = setTimeout(() => setVisible(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [delayAnimation]);
+
+  // Special rendering for typing indicator
+  const isTypingIndicator = sender === 'bot' && typeof message === 'object';
+
+  return (
+    <Zoom in={visible} timeout={400}>
+      <ListItem
+        sx={{
+          display: 'flex',
+          justifyContent: isUser ? 'flex-end' : 'flex-start',
+          mb: 1.5,
+          alignItems: 'flex-start',
+          padding: '4px 8px',
+        }}
+      >
+        {!isUser && (
+          <Avatar
+            sx={{
+              mr: 1.5,
+              bgcolor: sender === 'bot' ? theme.palette.primary.main : 'grey.300',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+              animation: sender === 'bot' ? 'pulse 2s infinite' : 'none',
+              '@keyframes pulse': {
+                '0%': { boxShadow: '0 0 0 0 rgba(0, 0, 0, 0.2)' },
+                '70%': { boxShadow: '0 0 0 10px rgba(0, 0, 0, 0)' },
+                '100%': { boxShadow: '0 0 0 0 rgba(0, 0, 0, 0)' },
+              },
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.1)',
+              },
+            }}
+          >
+            {sender === 'bot' ? <Psychology /> : <School />}
+          </Avatar>
+        )}
+        <Paper
+          elevation={3}
+          sx={{
+            padding: 2,
+            // Enhanced gradients for more visual interest
+            background: isUser
+              ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+              : sender === 'system'
+              ? `linear-gradient(to right, ${theme.palette.background.default}, ${theme.palette.background.paper})`
+              : theme.palette.grey[100],
+            color: isUser
+              ? 'white'
+              : theme.palette.getContrastText(theme.palette.grey[100]),
+            borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+            maxWidth: '75%',
+            position: 'relative',
+            boxShadow: isUser 
+              ? '0 4px 12px rgba(0,0,0,0.15)' 
+              : '0 2px 8px rgba(0,0,0,0.08)',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+              transform: 'translateY(-2px)',
+            },
+          }}
+        >
+          {isTypingIndicator ? (
+            message // If it's a typing indicator, render the passed object
+          ) : (
+            <Typography 
+              variant="body1" 
+              component="div"
+              sx={{
+                lineHeight: 1.6,
+                fontSize: '1rem',
+                fontWeight: sender === 'system' ? 500 : 400,
+              }}
+            >
+              {message}
+            </Typography>
+          )}
+        </Paper>
+        {isUser && (
+          <Avatar
+            sx={{
+              ml: 1.5,
+              bgcolor: theme.palette.secondary.main,
+              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+              animation: 'fadeInWithBounce 0.4s ease-out',
+              '@keyframes fadeInWithBounce': {
+                '0%': { opacity: 0, transform: 'scale(0.8)' },
+                '70%': { opacity: 1, transform: 'scale(1.1)' },
+                '100%': { opacity: 1, transform: 'scale(1)' },
+              },
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.1)',
+              },
+            }}
+          >
+            <EmojiEmotions />
+          </Avatar>
+        )}
+      </ListItem>
+    </Zoom>
+  );
+});
+
+export default MessageBubble;

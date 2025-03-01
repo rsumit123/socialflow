@@ -34,7 +34,7 @@ const ReportCardDetail = () => {
     const fetchReportCard = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/chat/sessions/${session_id}/report-card/`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/report/chat/sessions/${session_id}/report-card/`,
           {
             headers: {
               Authorization: `Bearer ${user.token}`,
