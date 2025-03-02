@@ -14,9 +14,10 @@ import {
   Zoom,
   Tooltip,
 } from '@mui/material';
-import { Send, Psychology, School, Info, ExitToApp } from '@mui/icons-material';
+
+import { Send, Psychology, School, Info, ExitToApp, PsychologyAlt } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // Import our custom components
 import MessageList from './MessageList';
@@ -29,6 +30,7 @@ const Chat = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { id } = useParams(); // Extract bot id from the URL
 
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -60,7 +62,7 @@ const Chat = () => {
     }
   };
 
-  // Create new chat session
+  // Create new chat session with bot_id query parameter
   useEffect(() => {
     if (isMounted.current) return;
     isMounted.current = true;
@@ -68,7 +70,8 @@ const Chat = () => {
     const createChatSession = async () => {
       try {
         setIsTyping(true);
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/chat/sessions/`);
+        // Pass the bot_id from the URL as a query param
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/chat/sessions/?bot_id=${id}`);
         const { session_id, ai_response, custom_scenario } = response.data;
         setSessionId(session_id);
 
@@ -111,7 +114,7 @@ const Chat = () => {
     };
 
     createChatSession();
-  }, [logout]);
+  }, [logout, id]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -303,6 +306,7 @@ const Chat = () => {
           sx={{ 
             borderRadius: '30px',
             px: 3,
+            py: 1,
             textTransform: 'none',
           }}
         >
@@ -320,7 +324,7 @@ const Chat = () => {
       content={
         <>
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-            <Psychology sx={{ fontSize: 60, color: theme.palette.primary.main, opacity: 0.8 }} />
+            <PsychologyAlt sx={{ fontSize: 60, color: theme.palette.primary.main, opacity: 0.8 }} />
           </Box>
           <Typography variant="body1" sx={{ textAlign: 'center' }}>
             Welcome to SocialFlow! Get ready to enhance your social conversation skills through 

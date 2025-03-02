@@ -15,90 +15,92 @@ import { handleAuthErrors } from '../Api';
 
 // A separate modal component that appears when training is locked.
 const LockedModal = ({ open, onDismiss }) => {
-  const theme = useTheme();
-  const navigate = useNavigate();
-
-  // If user clicks "Go to Evaluate," navigate immediately.
-  const handleEvaluate = () => {
-    navigate('/chat');
-  };
-
-  // The outer overlay (dark background) closes the modal and calls onDismiss.
-// The "Maybe Later" button also calls onDismiss. 
-  return open ? (
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        zIndex: 1300,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-      onClick={onDismiss}  // Clicking outside also closes the modal
-    >
+    const theme = useTheme();
+    const navigate = useNavigate();
+  
+    // Evaluate remains the same.
+    const handleEvaluate = () => {
+      navigate('/bots');
+    };
+  
+    // New Icebreaking button navigates to "/training/subcategories/4"
+    const handleIcebreaking = () => {
+      navigate('/training/subcategories/4');
+    };
+  
+    return open ? (
       <Box
-        onClick={(e) => e.stopPropagation()} // Prevent click-through close
         sx={{
-          width: { xs: '80%', sm: '400px' },
-          p: 4,
-          borderRadius: 2,
-          backgroundColor: 'background.paper',
-          boxShadow: 24,
-          textAlign: 'center',
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          zIndex: 1300,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
+        onClick={onDismiss}  // Clicking outside also closes the modal
       >
-        <Typography
-          variant="h5"
+        <Box
+          onClick={(e) => e.stopPropagation()} // Prevent click-through close
           sx={{
-            fontWeight: 'bold',
-            mb: 2,
-            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            width: { xs: '80%', sm: '400px' },
+            p: 4,
+            borderRadius: 2,
+            backgroundColor: 'background.paper',
+            boxShadow: 24,
+            textAlign: 'center',
           }}
         >
-          Welcome to SocialFlow
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 3 }}>
-          To help us understand you better, please go to our 
-          <strong> Evaluate </strong> section and complete your 
-          evaluation to unlock your customized Training Plan.
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
           <Typography
-            variant="button"
-            onClick={onDismiss}
+            variant="h5"
             sx={{
-              cursor: 'pointer',
-              color: 'text.secondary',
               fontWeight: 'bold',
-              textDecoration: 'underline',
-              '&:hover': { color: 'text.primary' }
+              mb: 2,
+              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
             }}
           >
-            Maybe Later
+            Welcome to SocialFlow
           </Typography>
-          <Typography
-            variant="button"
-            onClick={handleEvaluate}
-            sx={{
-              cursor: 'pointer',
-              color: theme.palette.primary.main,
-              fontWeight: 'bold',
-              textDecoration: 'underline',
-              '&:hover': { color: theme.palette.secondary.main }
-            }}
-          >
-            Go to Evaluate
+          <Typography variant="body1" sx={{ mb: 3 }}>
+            To help us create customized training plans for you, please choose one of the options below:
+            complete your assessment in <strong>Evaluate</strong>, or jump straight into your  <strong>Training Plan.</strong>.
           </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Typography
+              variant="button"
+              onClick={handleEvaluate}
+              sx={{
+                cursor: 'pointer',
+                color: theme.palette.primary.main,
+                fontWeight: 'bold',
+                textDecoration: 'underline',
+                '&:hover': { color: theme.palette.secondary.main }
+              }}
+            >
+              Go to Evaluate
+            </Typography>
+            <Typography
+              variant="button"
+              onClick={handleIcebreaking}
+              sx={{
+                cursor: 'pointer',
+                color: theme.palette.secondary.main,
+                fontWeight: 'bold',
+                textDecoration: 'underline',
+                '&:hover': { color: theme.palette.primary.main }
+              }}
+            >
+              Icebreak
+            </Typography>
+          </Box>
         </Box>
       </Box>
-    </Box>
-  ) : null;
-};
-
+    ) : null;
+  };
+  
 const PlatformPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -131,10 +133,10 @@ const PlatformPage = () => {
         }
 
         const data = await response.json();
-        setTrainingLocked(data.is_locked);
+        setTrainingLocked(data.new_user);
 
         // If locked, show modal
-        if (data.is_locked) {
+        if (data.new_user) {
           setShowLockedModal(true);
         }
       } catch (error) {
@@ -163,7 +165,7 @@ const PlatformPage = () => {
       title: 'Evaluate',
       icon: <Chat sx={{ fontSize: 40 }} />,
       description: 'Practice your communication skills in real-time scenarios',
-      path: '/chat',
+      path: '/bots',
       locked: false,
     },
     {
@@ -178,7 +180,7 @@ const PlatformPage = () => {
       icon: <School sx={{ fontSize: 40 }} />,
       description: 'Access structured learning modules and exercises',
       path: '/training/1',
-      locked: trainingLocked,
+      locked: false,
     },
   ];
 

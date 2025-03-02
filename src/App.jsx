@@ -17,6 +17,7 @@ import LearnMore from './components/About';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TOS';
 import LessonDetail from './components/LessonDetail/LessonDetail';
+import BotSelection from './components/BotSelection';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -70,7 +71,13 @@ function App() {
               }
             />
             <Route
-              path="/chat"
+              path="/bots"
+              element={
+                  <BotSelection />
+              }
+            />
+            <Route
+              path="/chat/character/:id"
               element={
                 <ProtectedRoute>
                   <Chat />
