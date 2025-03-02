@@ -48,7 +48,7 @@ const Header = (props) => {
   const navItems = user
     ? [
         { name: 'Platform', path: '/platform' },
-        { name: 'Evaluate', path: '/chat' },
+        { name: 'Evaluate', path: '/bots' },
         { name: 'Report Cards', path: '/report-cards' },
         { name: 'About', path: '/about' },
       ]
@@ -273,7 +273,7 @@ const Header = (props) => {
                   }}
                 />
 
-                {user && (
+                {/* {user && (
                   <Tooltip title="Notifications">
                     <IconButton color="inherit" sx={{ mr: 1 }}>
                       <Badge badgeContent={3} color="error">
@@ -281,7 +281,7 @@ const Header = (props) => {
                       </Badge>
                     </IconButton>
                   </Tooltip>
-                )}
+                )} */}
 
                 {authItems.map((item) =>
                   item.path ? (
@@ -332,7 +332,7 @@ const Header = (props) => {
                     >
                       <Avatar
                         sx={{ width: 32, height: 32 }}
-                        alt={user.displayName || 'User'}
+                        alt={user.email || 'Guest'}
                         src={user.photoURL || '/static/images/avatar/2.jpg'}
                       />
                     </IconButton>

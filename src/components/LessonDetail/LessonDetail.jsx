@@ -6,21 +6,17 @@ import {
   Container,
   Modal,
   TextField,
-  CircularProgress,
   useTheme,
   useMediaQuery,
   Paper,
-  Card,
-  CardContent,
+  Fade,
+  LinearProgress,
 } from '@mui/material';
 import {
   Timer,
   Send,
-  CheckCircle,
-  Warning,
   TrendingUp,
   History,
-  Psychology,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -30,7 +26,6 @@ import ModalContent from '../../components/LessonDetail/ModalContent';
 import ResultModal from '../../components/LessonDetail/ResultModal';
 import PreviousAttempts from '../../components/LessonDetail/PreviousAttempts';
 import { handleAuthErrors } from '../../Api/index';
-
 
 /* LessonDetail Component */
 const LessonDetail = () => {
@@ -61,8 +56,6 @@ const LessonDetail = () => {
     fetchPreviousAttempts();
     return () => clearInterval(timerRef.current);
   }, [lessonId]);
-
-  
 
   const fetchLessonDetails = async () => {
     try {
@@ -123,7 +116,6 @@ const LessonDetail = () => {
     clearInterval(timerRef.current);
     await submitResponse(userResponse, true);
   };
-  
 
   const submitResponse = async (response, timerEnded = false) => {
     setSubmitting(true);
@@ -150,14 +142,8 @@ const LessonDetail = () => {
       const data = await submitResponse.json();
       setResult(data);
       setShowResultModal(true);
-      // Refresh previous attempts (spinner shows inside the card)
+      // Refresh previous attempts
       fetchPreviousAttempts();
-
-      if (data.completed && data.next_lesson_url) {
-        setTimeout(() => {
-          window.location.href = data.next_lesson_url;
-        }, 3000);
-      }
     } catch (error) {
       console.error('Error submitting response:', error);
     } finally {
@@ -171,12 +157,16 @@ const LessonDetail = () => {
   };
 
   const retryChallenge = () => {
-    setShowResultModal(false);
     setUserResponse('');
     setTimeRemaining(lesson?.max_time);
     setChallengeActive(true);
     setStartTime(Date.now());
     startTimer();
+  };
+
+  // Handle closing the result modal
+  const handleCloseResultModal = () => {
+    setShowResultModal(false);
   };
 
   if (loading) {
@@ -194,6 +184,9 @@ const LessonDetail = () => {
     );
   }
 
+  // Calculate progress percentage for timer
+  const timePercentage = lesson?.max_time ? (timeRemaining / lesson.max_time) * 100 : 0;
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Modal open={showModal} onClose={() => {}}>
@@ -207,29 +200,36 @@ const LessonDetail = () => {
         />
       </Modal>
 
-      <Modal open={showResultModal} onClose={() => {}}>
+      <Modal 
+        open={showResultModal} 
+        onClose={handleCloseResultModal}
+      >
         <ResultModal
           theme={theme}
           result={result}
           retryChallenge={retryChallenge}
           isSmallScreen={isSmallScreen}
+          onClose={handleCloseResultModal}
         />
       </Modal>
 
       <Modal open={submitting} onClose={() => {}}>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            bgcolor: 'background.paper',
-            borderRadius: '20px',
-            p: 4,
-          }}
-        >
-          <LoadingScreen message="The master is evaluating your response..." />
-        </Box>
+        <Fade in={submitting}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              bgcolor: 'background.paper',
+              borderRadius: '20px',
+              p: 4,
+              boxShadow: 24,
+            }}
+          >
+            <LoadingScreen message="The master is evaluating your response..." />
+          </Box>
+        </Fade>
       </Modal>
 
       <Box sx={{ maxWidth: 800, mx: 'auto' }}>
@@ -248,51 +248,108 @@ const LessonDetail = () => {
 
         {challengeActive && (
           <>
-            <Paper sx={{ p: 3, mb: 4, borderRadius: '15px' }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Context
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 3 }}>
-                {lesson?.content.Context}
-              </Typography>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Objective
-              </Typography>
-              <Typography variant="body1">
-                {lesson?.content.Objective}
-              </Typography>
+            <Paper 
+              elevation={3} 
+              sx={{ 
+                p: 3, 
+                mb: 4, 
+                borderRadius: '16px',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {timeRemaining !== null && (
+                <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={timePercentage} 
+                    sx={{
+                      height: 4,
+                      background: 'rgba(0,0,0,0.05)',
+                      '& .MuiLinearProgress-bar': {
+                        background: timePercentage < 30 
+                          ? theme.palette.error.main 
+                          : `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+                      }
+                    }}
+                  />
+                </Box>
+              )}
+              
+              <Box sx={{ mt: 1 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    mb: 2,
+                    fontWeight: 600,
+                    color: theme.palette.primary.main
+                  }}
+                >
+                  Context
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3 }}>
+                  {lesson?.content.Context}
+                </Typography>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    mb: 2,
+                    fontWeight: 600,
+                    color: theme.palette.primary.main
+                  }}
+                >
+                  Objective
+                </Typography>
+                <Typography variant="body1">
+                  {lesson?.content.Objective}
+                </Typography>
+              </Box>
             </Paper>
 
             <Box sx={{ position: 'relative', mb: 4 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: 1,
+                  mb: 1,
+                }}
+              >
+                <Timer 
+                  color={timeRemaining < 30 ? "error" : "primary"} 
+                  sx={{ animation: timeRemaining < 30 ? 'pulse 1s infinite' : 'none' }}
+                />
+                <Typography 
+                  variant="h6" 
+                  color={timeRemaining < 30 ? "error.main" : "primary.main"}
+                  sx={{ 
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {Math.floor(timeRemaining / 60)}:
+                  {(timeRemaining % 60).toString().padStart(2, '0')}
+                </Typography>
+              </Box>
+              
               <TextField
                 fullWidth
                 multiline
-                rows={4}
+                rows={6}
                 value={userResponse}
                 onChange={(e) => setUserResponse(e.target.value)}
                 placeholder="Type your response here... Be creative and authentic!"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: '15px',
+                    borderRadius: '12px',
+                    transition: 'all 0.3s ease',
+                    '&:hover, &.Mui-focused': {
+                      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
+                    },
                   },
                 }}
               />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: -40,
-                  right: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                <Timer color="primary" />
-                <Typography variant="h6" color="primary">
-                  {Math.floor(timeRemaining / 60)}:
-                  {(timeRemaining % 60).toString().padStart(2, '0')}
-                </Typography>
-              </Box>
             </Box>
 
             <Button
@@ -302,9 +359,16 @@ const LessonDetail = () => {
               disabled={!userResponse.trim() || submitting}
               startIcon={<Send />}
               sx={{
-                borderRadius: '30px',
+                borderRadius: '12px',
                 py: 1.5,
+                fontWeight: 600,
                 background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                boxShadow: '0 4px 14px 0 rgba(63, 81, 181, 0.4)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: '0 6px 20px 0 rgba(63, 81, 181, 0.6)',
+                  transform: 'translateY(-2px)',
+                },
               }}
             >
               {submitting ? 'Submitting...' : 'Submit Response'}
