@@ -5,7 +5,7 @@ export const handleAuthErrors = (response, navigate) => {
       localStorage.removeItem('token');
       // Redirect the user to the login page
       navigate('/login');
-      return false; // Indicates that an auth error was handled
+      return true; // Indicates that an auth error was handled
     }
-    return true;
+    return false;
   };
