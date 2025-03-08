@@ -13,6 +13,7 @@ import PlatformPage from './components/PlatformPage';
 import Categories from './components/Categories';
 import Subcategories from './components/SubCategories';
 import Lessons from './components/Lessons';
+import IntroLessonDetail from './components/IntroLessonDetail';
 import LearnMore from './components/About';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TOS';
@@ -121,6 +122,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Lessons />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/training/intro/:subcategoryId"
+              element={
+                <ProtectedRoute>
+                  <IntroLessonDetail />
                 </ProtectedRoute>
               }
             />
