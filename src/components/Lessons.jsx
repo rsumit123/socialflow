@@ -24,7 +24,9 @@ import {
   School, 
   AccessTime, 
   GradeOutlined,
-  AutoAwesome 
+  AutoAwesome,
+  MenuBook,
+  ArrowForward
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -41,39 +43,56 @@ const Lessons = () => {
   const [loading, setLoading] = useState(true);
   const [subcategoryInfo, setSubcategoryInfo] = useState({
     name: '',
-    category: { name: '', id: '' }
+    category: { name: '', id: '' },
+    is_locked: true
   });
 
   useEffect(() => {
-    const fetchLessons = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(
+        // Fetch subcategory info first
+        const subcategoryResponse = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/course_content/subcategories/${subcategoryId}/`,
+          {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }
+        );
+        
+        handleAuthErrors(subcategoryResponse, navigate);
+        const subcategoryData = await subcategoryResponse.json();
+        setSubcategoryInfo(subcategoryData);
+        
+        // Then fetch lessons
+        const lessonsResponse = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/course_content/lessons/?subcategory_id=${subcategoryId}`,
           {
             headers: { Authorization: `Bearer ${user.token}` },
           }
         );
 
-        handleAuthErrors(response, navigate);
-        const data = await response.json();
-        setLessons(data.sort((a, b) => a.order - b.order));
-        if (data.length > 0) {
-          setSubcategoryInfo(data[0].subcategory);
-        }
+        handleAuthErrors(lessonsResponse, navigate);
+        const lessonsData = await lessonsResponse.json();
+        setLessons(lessonsData.sort((a, b) => a.order - b.order));
       } catch (error) {
-        console.error('Error fetching lessons:', error);
+        console.error('Error fetching data:', error);
       } finally {
         // Add a small delay to prevent layout jumps
         setTimeout(() => setLoading(false), 300);
       }
     };
 
-    fetchLessons();
+    fetchData();
   }, [subcategoryId, user.token, navigate]);
 
   const handleLessonClick = (lesson) => {
     if (!lesson.is_locked) {
       navigate(`/training/lessondetail/${lesson.id}`);
+    }
+  };
+  
+  const handleIntroClick = () => {
+    if (!subcategoryInfo.is_locked) {
+      navigate(`/training/intro/${subcategoryId}`);
     }
   };
 
@@ -256,6 +275,188 @@ const Lessons = () => {
         </Box>
 
         <Grid container spacing={4} justifyContent="center">
+          {/* Introduction Lesson Card - Always first and unlocked if subcategory is unlocked */}
+          {!loading && (
+            <Grid item xs={12} sm={12} md={8} lg={6}>
+              <Card
+                sx={{
+                  height: '100%',
+                  cursor: subcategoryInfo.is_locked ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: subcategoryInfo.is_locked ? 'none' : 'translateY(-8px)',
+                    boxShadow: theme.shadows[subcategoryInfo.is_locked ? 4 : 15]
+                  },
+                  position: 'relative',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  background: `linear-gradient(135deg, ${
+                    subcategoryInfo.is_locked 
+                      ? theme.palette.mode === 'dark' 
+                        ? 'rgba(66, 66, 66, 0.8)' 
+                        : 'rgba(245, 245, 245, 0.9)' 
+                      : theme.palette.background.paper
+                  } 0%, ${
+                    subcategoryInfo.is_locked 
+                      ? theme.palette.mode === 'dark' 
+                        ? 'rgba(33, 33, 33, 0.8)' 
+                        : 'rgba(224, 224, 224, 0.9)' 
+                      : theme.palette.background.default
+                  } 100%)`,
+                  border: `1px solid ${theme.palette.divider}`
+                }}
+                onClick={handleIntroClick}
+              >
+                {!subcategoryInfo.is_locked && (
+                  <Box 
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '4px',
+                      background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+                    }}
+                  />
+                )}
+                <CardContent sx={{ 
+                  p: { xs: 3, sm: 4 }, 
+                  display: 'flex', 
+                  flexDirection: { xs: 'column', sm: 'row' }, 
+                  alignItems: 'center', 
+                  height: '100%',
+                  gap: 3
+                }}>
+                  <Box 
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      position: 'relative',
+                      flexShrink: 0
+                    }}
+                  >
+                    {subcategoryInfo.is_locked ? (
+                      <Box sx={{ 
+                        p: 2,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        bgcolor: theme.palette.action.disabledBackground,
+                        color: 'text.disabled',
+                        width: { xs: '60px', sm: '80px' },
+                        height: { xs: '60px', sm: '80px' },
+                      }}>
+                        <Lock fontSize="large" />
+                      </Box>
+                    ) : (
+                      <Box sx={{ 
+                        p: 2,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main}22, ${theme.palette.secondary.main}33)`,
+                        color: theme.palette.primary.main,
+                        boxShadow: `0 8px 20px ${theme.palette.primary.main}33`,
+                        width: { xs: '60px', sm: '80px' },
+                        height: { xs: '60px', sm: '80px' },
+                        position: 'relative',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: '-4px',
+                          left: '-4px',
+                          right: '-4px',
+                          bottom: '-4px',
+                          borderRadius: '50%',
+                          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                          opacity: 0.3,
+                          zIndex: -1,
+                        }
+                      }}>
+                        <MenuBook fontSize="large" />
+                      </Box>
+                    )}
+                  </Box>
+                  
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: { xs: 'center', sm: 'flex-start' },
+                    textAlign: { xs: 'center', sm: 'left' },
+                    flex: 1
+                  }}>
+                    <Chip 
+                      label="Introduction" 
+                      size="small"
+                      color={subcategoryInfo.is_locked ? "default" : "primary"}
+                      sx={{ 
+                        mb: 1.5,
+                        fontWeight: 600,
+                        opacity: subcategoryInfo.is_locked ? 0.6 : 1
+                      }} 
+                    />
+                    
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontWeight: 700,
+                        mb: 1.5,
+                        color: subcategoryInfo.is_locked ? 'text.disabled' : 'text.primary',
+                      }}
+                    >
+                      Learn about {subcategoryInfo.name}
+                    </Typography>
+                    
+                    <Typography
+                      variant="body2"
+                      color={subcategoryInfo.is_locked ? "text.disabled" : "text.secondary"}
+                      sx={{ 
+                        mb: 2.5,
+                        lineHeight: 1.6,
+                        maxWidth: '600px'
+                      }}
+                    >
+                      {subcategoryInfo.description || "Get an introduction to this topic and understand the key concepts before diving into the lessons."}
+                    </Typography>
+                    
+                    {subcategoryInfo.is_locked ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" color="text.disabled">
+                          Locked Content
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Box 
+                        sx={{ 
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                          px: 2,
+                          py: 1,
+                          borderRadius: '20px',
+                          background: theme.palette.action.hover,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            background: theme.palette.action.selected
+                          }
+                        }}
+                      >
+                        <Typography variant="button" sx={{ fontWeight: 500 }}>
+                          Read Introduction
+                        </Typography>
+                        <ArrowForward fontSize="small" />
+                      </Box>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+          
+          {/* Regular Lessons */}
           {loading 
             ? renderSkeletons() 
             : lessons.map((lesson, index) => (
