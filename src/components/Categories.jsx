@@ -55,7 +55,7 @@ const Categories = () => {
         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/course_content/categories/`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        handleAuthErrors(response, navigate);
+        if (handleAuthErrors(response, navigate)) return;
         const data = await response.json();
         setCategories(data.sort((a, b) => a.order - b.order));
       } catch (error) {

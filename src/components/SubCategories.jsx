@@ -69,7 +69,7 @@ const SubCategories = () => {
             headers: { Authorization: `Bearer ${user.token}` },
           }
         );
-        handleAuthErrors(response, navigate);
+        if (handleAuthErrors(response, navigate)) return;
         const data = await response.json();
         setSubcategories(data.sort((a, b) => a.order - b.order));
         if (data.length > 0) {
