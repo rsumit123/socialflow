@@ -126,7 +126,8 @@ const PlatformPage = () => {
           }
         );
 
-        handleAuthErrors(response, navigate);
+        // If auth error occurred, stop further processing.
+        if (handleAuthErrors(response, navigate)) return;
 
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);

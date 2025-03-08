@@ -63,7 +63,7 @@ const LessonDetail = () => {
         `${import.meta.env.VITE_BACKEND_URL}/api/course_content/lessons/${lessonId}/`,
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
-      handleAuthErrors(response, navigate);
+      if (handleAuthErrors(response, navigate)) return;
       const data = await response.json();
       setLesson(data);
       setTimeRemaining(data.max_time);
