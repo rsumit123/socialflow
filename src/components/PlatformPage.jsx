@@ -14,7 +14,9 @@ import {
   Modal, 
   Fade,
   Stack,
-  Divider
+  Divider,
+  Paper,
+  Avatar
 } from '@mui/material';
 import { 
   Lock, 
@@ -23,7 +25,13 @@ import {
   School,
   CelebrationOutlined, 
   ArrowForward,
-  LocalFireDepartment
+  LocalFireDepartment,
+  Psychology,
+  EmojiPeople,
+  Lightbulb,
+  SelfImprovement,
+  Groups,
+  RecordVoiceOver
 } from '@mui/icons-material';
 
 const LockedModal = ({ open, onDismiss }) => {
@@ -350,7 +358,320 @@ const LockedModal = ({ open, onDismiss }) => {
   );
 };
 
+// Creative Loading Component
+const CreativeLoading = () => {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const [loadingPhase, setLoadingPhase] = useState(0);
+  const [loadingText, setLoadingText] = useState('Analyzing your social profile');
   
+  useEffect(() => {
+    const phrases = [
+      'Analyzing your social profile',
+      'Curating personalized training modules',
+      'Preparing conversation scenarios',
+      'Optimizing your learning path',
+      'Finalizing your custom training plan'
+    ];
+    
+    let currentPhrase = 0;
+    
+    const intervalId = setInterval(() => {
+      currentPhrase = (currentPhrase + 1) % phrases.length;
+      setLoadingText(phrases[currentPhrase]);
+      setLoadingPhase(currentPhrase);
+    }, 2200);
+    
+    return () => clearInterval(intervalId);
+  }, []);
+  
+  // Icons for each loading phase
+  const phaseIcons = [
+    <Psychology key="psychology" sx={{ fontSize: { xs: 36, sm: 48 }, color: theme.palette.primary.main }} />,
+    <SelfImprovement key="improvement" sx={{ fontSize: { xs: 36, sm: 48 }, color: theme.palette.secondary.main }} />,
+    <RecordVoiceOver key="voice" sx={{ fontSize: { xs: 36, sm: 48 }, color: theme.palette.primary.main }} />,
+    <Lightbulb key="lightbulb" sx={{ fontSize: { xs: 36, sm: 48 }, color: theme.palette.secondary.main }} />,
+    <Groups key="groups" sx={{ fontSize: { xs: 36, sm: 48 }, color: theme.palette.primary.main }} />
+  ];
+  
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        width: '100%',
+        background: theme.palette.background.default,
+        position: 'relative',
+        overflow: 'hidden',
+        p: 3
+      }}
+    >
+      {/* Animated background elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          overflow: 'hidden',
+          zIndex: 0,
+          opacity: 0.5
+        }}
+      >
+        {[...Array(6)].map((_, i) => (
+          <Box
+            key={i}
+            sx={{
+              position: 'absolute',
+              width: { xs: '60px', sm: '80px', md: '100px' },
+              height: { xs: '60px', sm: '80px', md: '100px' },
+              borderRadius: '50%',
+              background: i % 2 === 0 
+                ? `radial-gradient(circle, ${theme.palette.primary.main}22, ${theme.palette.primary.main}11)`
+                : `radial-gradient(circle, ${theme.palette.secondary.main}22, ${theme.palette.secondary.main}11)`,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animation: `float${i} ${10 + i * 2}s infinite ease-in-out`,
+              '@keyframes float0': {
+                '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                '50%': { transform: 'translate(30px, -30px) scale(1.1)' }
+              },
+              '@keyframes float1': {
+                '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                '50%': { transform: 'translate(-40px, 20px) scale(1.15)' }
+              },
+              '@keyframes float2': {
+                '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                '50%': { transform: 'translate(20px, 40px) scale(1.05)' }
+              },
+              '@keyframes float3': {
+                '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                '50%': { transform: 'translate(-30px, -20px) scale(1.1)' }
+              },
+              '@keyframes float4': {
+                '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                '50%': { transform: 'translate(40px, 30px) scale(1.2)' }
+              },
+              '@keyframes float5': {
+                '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                '50%': { transform: 'translate(-20px, 40px) scale(1.1)' }
+              }
+            }}
+          />
+        ))}
+      </Box>
+      
+      {/* Main content */}
+      <Paper
+        elevation={4}
+        sx={{
+          p: { xs: 3, sm: 5 },
+          borderRadius: '24px',
+          background: theme.palette.mode === 'dark' 
+            ? `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[900]} 100%)`
+            : `linear-gradient(145deg, #ffffff 0%, ${theme.palette.background.paper} 100%)`,
+          maxWidth: '500px',
+          width: '100%',
+          position: 'relative',
+          zIndex: 1,
+          overflow: 'hidden',
+          boxShadow: `0 20px 80px -10px ${theme.palette.primary.main}44`,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+          }
+        }}
+      >
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography
+            variant={isSmallScreen ? 'h5' : 'h4'}
+            component="h1"
+            sx={{
+              fontWeight: 800,
+              mb: 1,
+              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}
+          >
+            SocialFlow
+          </Typography>
+          <Typography
+            variant="subtitle1"
+            color="text.secondary"
+            sx={{ fontWeight: 500 }}
+          >
+            Your personalized social skills journey
+          </Typography>
+        </Box>
+        
+        {/* Icon container with animation */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            mb: 4,
+            position: 'relative'
+          }}
+        >
+          <Box
+            sx={{
+              width: { xs: '100px', sm: '120px' },
+              height: { xs: '100px', sm: '120px' },
+              borderRadius: '50%',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}22, ${theme.palette.secondary.main}33)`,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'relative',
+              animation: 'pulse 2s infinite ease-in-out',
+              '@keyframes pulse': {
+                '0%': { transform: 'scale(1)' },
+                '50%': { transform: 'scale(1.05)' },
+                '100%': { transform: 'scale(1)' }
+              }
+            }}
+          >
+            {/* Rotating circle around icon */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '-10px',
+                left: '-10px',
+                right: '-10px',
+                bottom: '-10px',
+                borderRadius: '50%',
+                border: `2px dashed ${theme.palette.primary.main}44`,
+                animation: 'spin 10s linear infinite',
+                '@keyframes spin': {
+                  '0%': { transform: 'rotate(0deg)' },
+                  '100%': { transform: 'rotate(360deg)' }
+                }
+              }}
+            />
+            
+            {/* Animated dots around the circle */}
+            {[...Array(5)].map((_, i) => (
+              <Box
+                key={i}
+                sx={{
+                  position: 'absolute',
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: i % 2 === 0 ? theme.palette.primary.main : theme.palette.secondary.main,
+                  top: '50%',
+                  left: '50%',
+                  transform: `rotate(${i * 72}deg) translateX(60px) rotate(-${i * 72}deg)`,
+                  animation: `blink 1.5s infinite ease-in-out ${i * 0.3}s`,
+                  '@keyframes blink': {
+                    '0%, 100%': { opacity: 0.4, transform: `rotate(${i * 72}deg) translateX(60px) rotate(-${i * 72}deg) scale(1)` },
+                    '50%': { opacity: 1, transform: `rotate(${i * 72}deg) translateX(60px) rotate(-${i * 72}deg) scale(1.3)` }
+                  }
+                }}
+              />
+            ))}
+            
+            {/* Current phase icon with fade transition */}
+            <Fade in={true} key={loadingPhase} timeout={500}>
+              <Box>{phaseIcons[loadingPhase]}</Box>
+            </Fade>
+          </Box>
+        </Box>
+        
+        {/* Loading text with fade transition */}
+        <Fade in={true} key={loadingText} timeout={500}>
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                color: theme.palette.text.primary,
+                minHeight: '32px'
+              }}
+            >
+              {loadingText}
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1 }}
+            >
+              This may take a few moments
+            </Typography>
+          </Box>
+        </Fade>
+        
+        {/* Progress indicator */}
+        <Box sx={{ px: 4 }}>
+          <Box
+            sx={{
+              height: '6px',
+              borderRadius: '3px',
+              background: theme.palette.grey[200],
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: '30%',
+                borderRadius: '3px',
+                background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                animation: 'progress 2.2s infinite ease-in-out',
+                '@keyframes progress': {
+                  '0%': { left: '-30%', width: '30%' },
+                  '50%': { left: '30%', width: '40%' },
+                  '100%': { left: '100%', width: '30%' }
+                }
+              }}
+            />
+          </Box>
+        </Box>
+        
+        {/* Testimonial/tip */}
+        <Box
+          sx={{
+            mt: 4,
+            p: 2,
+            borderRadius: '12px',
+            background: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+            border: `1px solid ${theme.palette.divider}`
+          }}
+        >
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              fontStyle: 'italic',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <Lightbulb fontSize="small" color="primary" />
+            "Effective communication is 20% what you know and 80% how you feel about what you know."
+          </Typography>
+        </Box>
+      </Paper>
+    </Box>
+  );
+};
+
 const PlatformPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -442,11 +763,7 @@ const PlatformPage = () => {
   };
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <CircularProgress color="secondary" />
-      </Box>
-    );
+    return <CreativeLoading />;
   }
 
   return (
