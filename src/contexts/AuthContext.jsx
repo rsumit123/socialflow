@@ -39,15 +39,24 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (email, password) => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/register/`, {
-        email,
-        password
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/register/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
-      if (response.data) {
-        localStorage.setItem('token', response.data.session.access_token);
-        setUser({ email, token: response.data.session.access_token });
-        return response.data; // Optional: return data in case it needs to be used
+      
+      // Return the entire response object so we can check status code in the component
+      if (response.ok) {
+        const data = await response.json();
+        // Only set user if we're auto-logging in after registration
+        // For this app, we're redirecting to login instead
+        // localStorage.setItem('token', data.session.access_token);
+        // setUser({ email, token: data.session.access_token });
       }
+      
+      return response;
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;

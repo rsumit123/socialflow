@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { 
   Container, TextField, Button, Typography, Box, 
   CircularProgress, Paper, Divider, InputAdornment, IconButton,
-  useMediaQuery, useTheme
+  useMediaQuery, useTheme, Alert, Snackbar, Collapse
 } from '@mui/material';
 import { useNavigate, Link } from 'react-router-dom';
 import EmailIcon from '@mui/icons-material/Email';
@@ -12,6 +12,8 @@ import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 const Register = () => {
   const { register } = useAuth();
@@ -25,22 +27,108 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // New state for notifications
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'info', // 'success', 'error', 'warning', 'info'
+  });
+  
+  // New state for form validation
+  const [errors, setErrors] = useState({
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = { email: '', password: '', confirmPassword: '' };
+    
+    // Email validation
+    if (!email) {
+      newErrors.email = 'Email is required';
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Email address is invalid';
+      isValid = false;
+    }
+    
+    // Password validation
+    if (!password) {
+      newErrors.password = 'Password is required';
+      isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+      isValid = false;
+    }
+    
+    // Confirm password validation
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      alert('Passwords do not match');
+    
+    if (!validateForm()) {
       return;
     }
+    
     setLoading(true);
     try {
-      await register(email, password);
-      setLoading(false);
-      alert('Registration successful. Please log in.');
-      navigate('/login');
+      const response = await register(email, password);
+      
+      // Check if registration was successful based on the response
+      if (response && response.status === 201) {
+        setNotification({
+          open: true,
+          message: 'Registration successful! Redirecting to login...',
+          severity: 'success'
+        });
+        
+        // Clear form
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        
+        // Redirect after a short delay
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        // Handle other successful responses that might not be 201
+        const data = await response.json();
+        throw new Error(data.message || 'Registration failed');
+      }
     } catch (error) {
+      // Extract error message from API response if available
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // If we can't parse the JSON, use the default message
+        }
+      }
+      
+      setNotification({
+        open: true,
+        message: errorMessage,
+        severity: 'error'
+      });
+    } finally {
       setLoading(false);
-      alert('Registration failed. Please try again.');
     }
   };
 
@@ -50,6 +138,13 @@ const Register = () => {
 
   const handleToggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(!showConfirmPassword);
+  };
+  
+  const handleCloseNotification = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setNotification({ ...notification, open: false });
   };
 
   return (
@@ -64,6 +159,30 @@ const Register = () => {
         py: isMobile ? 4 : 8
       }}
     >
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ 
+            width: '100%',
+            alignItems: 'center',
+            '& .MuiAlert-icon': {
+              fontSize: '1.25rem'
+            }
+          }}
+          icon={notification.severity === 'success' ? <CheckCircleOutlineIcon /> : <ErrorOutlineIcon />}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
+      
       <Paper 
         elevation={3}
         sx={{
@@ -115,10 +234,12 @@ const Register = () => {
             autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            error={!!errors.email}
+            helperText={errors.email}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <EmailIcon color="action" />
+                  <EmailIcon color={errors.email ? "error" : "action"} />
                 </InputAdornment>
               ),
             }}
@@ -141,10 +262,12 @@ const Register = () => {
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            error={!!errors.password}
+            helperText={errors.password}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <LockIcon color="action" />
+                  <LockIcon color={errors.password ? "error" : "action"} />
                 </InputAdornment>
               ),
               endAdornment: (
@@ -176,10 +299,12 @@ const Register = () => {
             id="confirmPassword"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            error={!!errors.confirmPassword}
+            helperText={errors.confirmPassword}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <LockIcon color="action" />
+                  <LockIcon color={errors.confirmPassword ? "error" : "action"} />
                 </InputAdornment>
               ),
               endAdornment: (
