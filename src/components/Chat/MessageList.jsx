@@ -13,7 +13,7 @@ const MessageList = React.memo(({ messages, isTyping }) => {
       message={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography component="div" sx={{ fontSize: '0.9rem', opacity: 0.9 }}>
-            Thinking
+            Typing
           </Typography>
           {[0, 1, 2].map((i) => (
             <Box
@@ -40,7 +40,16 @@ const MessageList = React.memo(({ messages, isTyping }) => {
   );
   
   return (
-    <List sx={{ width: '100%' }}>
+    <List 
+      sx={{ 
+        width: '100%',
+        p: 0,
+        // Remove any extra padding/margin that might create unwanted space
+        m: 0,
+        // Make the list take up only as much space as needed
+        flexGrow: 0
+      }}
+    >
       {messages.map((msg, index) => (
         <MessageBubble 
           key={index} 

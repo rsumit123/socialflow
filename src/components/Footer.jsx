@@ -66,7 +66,7 @@ const Footer = () => {
               Social<span style={{ color: '#64ffda' }}>Flow</span>
             </Typography>
             <Typography variant="body1" sx={{ maxWidth: '500px', fontWeight: 300, lineHeight: 1.6 }}>
-              Elevate your social presence with AI-powered insights and creative strategies for a modern digital experience.
+                Elevate your social presence with AI-powered insights and creative tips & strategies for a better social experience.
             </Typography>
           </Grid>
 
