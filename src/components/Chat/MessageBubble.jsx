@@ -25,15 +25,23 @@ const MessageBubble = React.memo(({ message, sender, delayAnimation = true }) =>
         sx={{
           display: 'flex',
           justifyContent: isUser ? 'flex-end' : 'flex-start',
-          mb: 1.5,
+          mb: 0.75,
           alignItems: 'flex-start',
-          padding: '4px 8px',
+          padding: '2px 8px',
+          '&:first-of-type': {
+            mt: 1,
+          },
+          ...(sender === 'system' && {
+            my: 0.5,
+          })
         }}
       >
         {!isUser && (
           <Avatar
             sx={{
               mr: 1.5,
+              width: 36,
+              height: 36,
               bgcolor: sender === 'bot' ? theme.palette.primary.main : 'grey.300',
               boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
               animation: sender === 'bot' ? 'pulse 2s infinite' : 'none',
@@ -48,14 +56,13 @@ const MessageBubble = React.memo(({ message, sender, delayAnimation = true }) =>
               },
             }}
           >
-            {sender === 'bot' ? <Psychology /> : <School />}
+            {sender === 'bot' ? <Psychology sx={{ fontSize: 20 }} /> : <School sx={{ fontSize: 20 }} />}
           </Avatar>
         )}
         <Paper
           elevation={3}
           sx={{
-            padding: 2,
-            // Enhanced gradients for more visual interest
+            padding: 1.5,
             background: isUser
               ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
               : sender === 'system'
@@ -78,13 +85,13 @@ const MessageBubble = React.memo(({ message, sender, delayAnimation = true }) =>
           }}
         >
           {isTypingIndicator ? (
-            message // If it's a typing indicator, render the passed object
+            message
           ) : (
             <Typography 
               variant="body1" 
               component="div"
               sx={{
-                lineHeight: 1.6,
+                lineHeight: 1.5,
                 fontSize: '1rem',
                 fontWeight: sender === 'system' ? 500 : 400,
               }}
@@ -97,6 +104,8 @@ const MessageBubble = React.memo(({ message, sender, delayAnimation = true }) =>
           <Avatar
             sx={{
               ml: 1.5,
+              width: 36,
+              height: 36,
               bgcolor: theme.palette.secondary.main,
               boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
               animation: 'fadeInWithBounce 0.4s ease-out',
@@ -111,7 +120,7 @@ const MessageBubble = React.memo(({ message, sender, delayAnimation = true }) =>
               },
             }}
           >
-            <EmojiEmotions />
+            <EmojiEmotions sx={{ fontSize: 20 }} />
           </Avatar>
         )}
       </ListItem>

@@ -25,6 +25,10 @@ import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 import CustomDialog from './CustomDialog';
 
+// Define message count threshold for auto-generating reports
+// Ideally this would come from .env, but for now hardcoding with a constant for easy modification
+const MESSAGE_COUNT_THRESHOLD = 10;
+
 const Chat = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -46,6 +50,8 @@ const Chat = () => {
   const [motivationSnackbarOpen, setMotivationSnackbarOpen] = useState(false);
   const [motivationMessage, setMotivationMessage] = useState('');
   const [endChatDialogOpen, setEndChatDialogOpen] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
+  const [reportGenerated, setReportGenerated] = useState(false); // Track if report has been generated
 
   const isMounted = useRef(false);
   const messagesEndRef = useRef(null);
@@ -138,16 +144,65 @@ const Chat = () => {
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Show motivational message every 3 user messages (if below 10)
+  // Show motivational message every 3 user messages (if below threshold)
   useEffect(() => {
     const userMsgCount = messages.filter((msg) => msg.sender === 'user').length;
-    if (userMsgCount > 0 && userMsgCount < 10 && userMsgCount % 3 === 0) {
-      setMotivationMessage(`You are doing good. Keep going for ${10 - userMsgCount} more messages!`);
+    if (userMsgCount > 0 && userMsgCount < MESSAGE_COUNT_THRESHOLD && userMsgCount % 3 === 0) {
+      setMotivationMessage(`You are doing good. Keep going for ${MESSAGE_COUNT_THRESHOLD - userMsgCount} more messages!`);
       setMotivationSnackbarOpen(true);
     }
   }, [messages]);
 
-  // Updated send message function to optionally accept a custom message
+  // Function to generate report
+  const generateReport = async (shouldEndChat = false) => {
+    // Skip if report already generated
+    if (reportGenerated) {
+      if (shouldEndChat) {
+        navigate('/report-cards');
+      }
+      return;
+    }
+    
+    if (!sessionId) return;
+    
+    setIsTyping(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/chat/sessions/${sessionId}/generate-report/`
+      );
+      
+      const { report_link } = response.data;
+      
+      setReportLink(report_link || '');
+      setReportGenerated(true); // Mark report as generated
+      
+      // If the user explicitly ended the chat, navigate to Report Cards
+      // Otherwise show the evaluation modal, allowing them to continue chatting
+      if (shouldEndChat) {
+        navigate('/report-cards');
+      } else {
+        setEvaluationModal(true);
+      }
+    } catch (error) {
+      console.error('Error generating report:', error);
+      if (error.response?.data?.error === 'Token has expired!') {
+        setSessionExpired(true);
+        logout();
+      } else {
+        setErrorMessage('Failed to generate report. Please try again.');
+        setOpenSnackbar(true);
+        
+        // If explicitly ending chat, still navigate away even if report generation failed
+        if (shouldEndChat) {
+          navigate('/report-cards');
+        }
+      }
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  // Updated send message function to check message count
   const handleSendMessage = async (customMessage) => {
     const messageToSend = customMessage !== undefined ? customMessage : userMessage;
     if (!messageToSend.trim()) return;
@@ -169,15 +224,20 @@ const Chat = () => {
         newMessage
       );
 
-      const { ai_response, evaluation } = response.data;
+      const { ai_response, message_count, chat_ended } = response.data;
 
-      if (evaluation) {
-        const { report_link } = evaluation;
-        setReportLink(report_link || '');
+      // Update message count
+      setMessageCount(message_count || 0);
+      
+      // Add bot's response to the messages
+      if (ai_response) {
         setMessages((prev) => [...prev, { message: ai_response, sender: 'bot' }]);
-        setEvaluationModal(true);
-      } else if (ai_response) {
-        setMessages((prev) => [...prev, { message: ai_response, sender: 'bot' }]);
+      }
+      
+      // If chat has ended naturally or message count threshold reached, generate report
+      // Only if report hasn't been generated yet
+      if (!reportGenerated && (chat_ended || (message_count && message_count >= MESSAGE_COUNT_THRESHOLD))) {
+        await generateReport(false); // Pass false to show modal and allow continuing chat
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -200,138 +260,160 @@ const Chat = () => {
   // Scroll to bottom button
   const ScrollToBottomButton = () => (
     <Zoom in={!isBottom}>
-      <IconButton
-        onClick={() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-          setIsBottom(true);
-        }}
-        sx={{
-          position: 'absolute',
-          bottom: 20,
-          right: 20,
-          zIndex: 10,
-          bgcolor: theme.palette.primary.main,
-          color: 'white',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-          '&:hover': {
-            bgcolor: theme.palette.primary.dark,
-            transform: 'scale(1.1)',
-          },
-          transition: 'all 0.2s ease',
-        }}
-      >
-        <Send sx={{ transform: 'rotate(-90deg)' }} />
-      </IconButton>
+      <Tooltip title="Scroll to bottom">
+        <IconButton
+          color="primary"
+          size="large"
+          onClick={() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            setIsBottom(true);
+          }}
+          sx={{
+            position: 'absolute',
+            bottom: '80px',
+            right: '20px',
+            zIndex: 2,
+            backgroundColor: 'background.paper',
+            boxShadow: theme.shadows[4],
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+            },
+          }}
+        >
+          <Send sx={{ transform: 'rotate(90deg)' }} />
+        </IconButton>
+      </Tooltip>
     </Zoom>
   );
 
-  // Render session expired dialog
+  // Render Session Expired dialog
   const renderSessionExpiredDialog = () => (
     <CustomDialog
       open={sessionExpired}
       title="Session Expired"
-      content="Your session has expired. Please login again."
+      content="Your session has expired. Please login again to continue."
       actions={
         <Button
           onClick={() => navigate('/login')}
           variant="contained"
-          sx={{
-            borderRadius: '30px',
-            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            px: 3,
-            py: 1,
-            fontWeight: 600,
-            textTransform: 'none',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-            '&:hover': {
-              boxShadow: '0 6px 12px rgba(0,0,0,0.25)',
-              transform: 'translateY(-2px)',
-            },
-            transition: 'all 0.2s ease',
-          }}
+          sx={{ borderRadius: '30px', px: 3, py: 1, textTransform: 'none' }}
         >
-          Go to Login
+          Login
         </Button>
       }
     />
   );
 
-  // Render evaluation modal
+  // Render Evaluation modal that shows at end of chat
   const renderEvaluationModal = () => (
     <CustomDialog
       open={evaluationModal}
-      title="Report Card Generated"
+      title="Chat Evaluation Ready"
       content={
-        <>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-            <School sx={{ fontSize: 60, color: theme.palette.primary.main, opacity: 0.9 }} />
-          </Box>
-          <Typography variant="body1" sx={{ textAlign: 'center', mb: 2 }}>
-            Your report card has been generated. Click below to view your performance or continue chatting.
+        <Box sx={{ textAlign: 'center' }}>
+          <PsychologyAlt
+            sx={{
+              fontSize: 60,
+              color: theme.palette.primary.main,
+              mb: 2,
+              animation: 'pulse 2s infinite',
+              '@keyframes pulse': {
+                '0%': { transform: 'scale(1)' },
+                '50%': { transform: 'scale(1.1)' },
+                '100%': { transform: 'scale(1)' },
+              },
+            }}
+          />
+          <Typography variant="h6" gutterBottom>
+            Great job! Your social skills evaluation is ready.
           </Typography>
+          <Typography variant="body1" color="text.secondary" paragraph>
+            We've analyzed your conversation and prepared a detailed report on your social skills.
+            You can view your report or continue chatting!
+          </Typography>
+        </Box>
+      }
+      actions={
+        <>
           <Button
             onClick={() => {
               setEvaluationModal(false);
               if (reportLink) {
-                const sessionId = extractSessionIdFromLink(reportLink);
-                navigate(sessionId ? `/report-cards/${sessionId}` : '/report-cards');
+                window.location.href = reportLink;
+              } else {
+                navigate('/report-cards');
               }
             }}
+            variant="contained"
             sx={{
-              mt: 2,
-              display: 'block',
-              width: '100%',
               borderRadius: '30px',
-              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              py: 1.2,
-              fontWeight: 600,
+              px: 3,
+              py: 1.5,
               textTransform: 'none',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
               '&:hover': {
                 boxShadow: '0 6px 12px rgba(0,0,0,0.25)',
                 transform: 'translateY(-2px)',
               },
               transition: 'all 0.2s ease',
             }}
-            variant="contained"
           >
-            View Report Card
+            View My Report
+          </Button>
+          <Button
+            onClick={() => setEvaluationModal(false)}
+            variant="outlined"
+            sx={{
+              ml: 2,
+              borderRadius: '30px',
+              px: 3,
+              py: 1.5,
+              textTransform: 'none',
+            }}
+          >
+            Continue Chatting
           </Button>
         </>
       }
-      actions={
-        <Button
-          onClick={() => setEvaluationModal(false)}
-          variant="outlined"
-          sx={{ 
-            borderRadius: '30px',
-            px: 3,
-            py: 1,
-            textTransform: 'none',
-          }}
-        >
-          Continue Chatting
-        </Button>
-      }
+      onClose={() => setEvaluationModal(false)}
     />
   );
 
-  // Render welcome modal
+  // Render Welcome modal
   const renderWelcomeModal = () => (
-    <CustomDialog 
+    <CustomDialog
       open={openModal}
-      title="Welcome to SocialFlow"
+      title="Welcome to Chat!"
       content={
-        <>
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-            <PsychologyAlt sx={{ fontSize: 60, color: theme.palette.primary.main, opacity: 0.8 }} />
+        <Box sx={{ textAlign: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              mb: 2,
+            }}
+          >
+            <Psychology
+              sx={{
+                fontSize: 60,
+                color: theme.palette.primary.main,
+                animation: 'wave 1s infinite alternate',
+                '@keyframes wave': {
+                  '0%': { transform: 'rotate(-10deg)' },
+                  '100%': { transform: 'rotate(10deg)' },
+                },
+              }}
+            />
           </Box>
-          <Typography variant="body1" sx={{ textAlign: 'center' }}>
-            Welcome to SocialFlow! Get ready to enhance your social conversation skills through 
-            engaging real-life scenarios. Let's see how you handle different social situations 
-            and help you improve your communication abilities.
+          <Typography variant="body1" paragraph>
+            You are about to start a conversation with our AI character. This is a safe space to practice
+            your social skills.
           </Typography>
-        </>
+          <Typography variant="body1" paragraph>
+            Try to keep the conversation going for at least {MESSAGE_COUNT_THRESHOLD} messages to get a meaningful evaluation.
+          </Typography>
+        </Box>
       }
       actions={
         <Button
@@ -339,13 +421,11 @@ const Chat = () => {
           variant="contained"
           sx={{
             borderRadius: '30px',
-            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            px: 4,
-            py: 1.2,
-            fontSize: '1rem',
-            fontWeight: 600,
+            px: 3,
+            py: 1.5,
             textTransform: 'none',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
             '&:hover': {
               boxShadow: '0 6px 12px rgba(0,0,0,0.25)',
               transform: 'translateY(-2px)',
@@ -365,13 +445,13 @@ const Chat = () => {
     <CustomDialog
       open={endChatDialogOpen}
       title="End Chat"
-      content="You are about to end this chat abruptly, and generate report. Do you want to continue?"
+      content="You are about to end this chat and generate a report. Do you want to continue?"
       actions={
         <>
           <Button
             onClick={() => {
               setEndChatDialogOpen(false);
-              handleSendMessage("end this chat");
+              generateReport(true); // Pass true to indicate this is an explicit end chat action
             }}
             variant="contained"
             sx={{
@@ -448,114 +528,73 @@ const Chat = () => {
             <Typography
               variant="h5"
               sx={{
-                fontWeight: 700,
-                textAlign: 'center',
-                position: 'relative',
-                display: 'inline-block',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  bottom: -8,
-                  left: '25%',
-                  width: '50%',
-                  height: 3,
-                  backgroundColor: 'white',
-                  borderRadius: 2,
-                },
+                fontWeight: 600,
+                mr: 1,
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
-              Evaluation
+              <Psychology sx={{ mr: 1 }} /> Chat Session {messageCount > 0 && `(${messageCount}/${MESSAGE_COUNT_THRESHOLD})`}
             </Typography>
-            <Tooltip title="Practice your social communication skills">
-              <IconButton 
-                size="small" 
-                sx={{ 
-                  color: 'white',
-                  ml: 1,
-                  opacity: 0.8,
-                  '&:hover': { opacity: 1 }
-                }}
-              >
-                <Info fontSize="small" />
-              </IconButton>
-            </Tooltip>
           </Box>
+
           <Tooltip title="End Chat">
             <IconButton
               onClick={() => setEndChatDialogOpen(true)}
               sx={{
-                color: theme.palette.error.main,
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  transform: 'scale(1.1)',
+                },
+                transition: 'all 0.2s',
               }}
             >
               <ExitToApp />
             </IconButton>
           </Tooltip>
         </Box>
-        
-        {/* Chat Area */}
+
+        {/* Chat message area with scroll container */}
         <Box
           ref={chatContainerRef}
           sx={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: isSmallScreen ? 1 : 2,
-            backgroundImage: `radial-gradient(circle at center, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+            flexGrow: 1,
+            overflow: 'auto',
+            p: 2,
+            bgcolor: 'background.default',
             position: 'relative',
-            '&::-webkit-scrollbar': {
-              width: '8px',
-            },
-            '&::-webkit-scrollbar-track': {
-              background: theme.palette.background.default,
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: `${theme.palette.primary.main}80`,
-              borderRadius: '4px',
-            },
-            '&::-webkit-scrollbar-thumb:hover': {
-              background: theme.palette.primary.main,
-            },
+            display: 'flex',
+            flexDirection: 'column',
+            // This will push messages to the bottom when there are few messages
+            justifyContent: messages.length < 4 ? 'flex-end' : 'flex-start',
           }}
         >
           <MessageList messages={messages} isTyping={isTyping} />
           <div ref={messagesEndRef} />
           <ScrollToBottomButton />
         </Box>
-        
-        {/* Input Area */}
-        <ChatInput 
-          value={userMessage} 
-          onChange={setUserMessage} 
-          onSend={() => handleSendMessage()} 
-          isTyping={isTyping} 
-        />
+
+        {/* Input area for user messages */}
+        <ChatInput value={userMessage} onChange={setUserMessage} onSend={handleSendMessage} isTyping={isTyping} />
       </Paper>
 
-      {/* Error Snackbar */}
+      {/* Snackbar for error messages */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}
         onClose={() => setOpenSnackbar(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        TransitionComponent={Fade}
       >
-        <Alert
-          onClose={() => setOpenSnackbar(false)}
-          severity="error"
-          variant="filled"
-          sx={{
-            width: '100%',
-            borderRadius: 8,
-            fontWeight: 500,
-          }}
-        >
+        <Alert onClose={() => setOpenSnackbar(false)} severity="error" variant="filled">
           {errorMessage}
         </Alert>
       </Snackbar>
 
-      {/* Motivational Snackbar */}
+      {/* Motivational snackbar */}
       <Snackbar
         open={motivationSnackbarOpen}
-        autoHideDuration={3000}
+        autoHideDuration={4000}
         onClose={() => setMotivationSnackbarOpen(false)}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
@@ -563,11 +602,8 @@ const Chat = () => {
           onClose={() => setMotivationSnackbarOpen(false)}
           severity="info"
           variant="filled"
-          sx={{
-            width: '100%',
-            borderRadius: 8,
-            fontWeight: 500,
-          }}
+          icon={<School />}
+          sx={{ width: '100%' }}
         >
           {motivationMessage}
         </Alert>

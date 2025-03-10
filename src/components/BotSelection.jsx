@@ -22,7 +22,8 @@ import {
   PsychologyAlt,
   SportsEsports,
   Code, 
-  TrendingUp
+  TrendingUp,
+  Chat
 } from '@mui/icons-material';
 
 import { useNavigate } from 'react-router-dom';
@@ -67,15 +68,9 @@ const BotSelection = () => {
     setStartAnimation(true);
   }, []);
 
-  const handleBotSelect = (bot) => {
-    setSelectedBot(bot);
-  };
-
-  // When the user clicks "Start Chatting," navigate to /chat/character/{id}
-  const handleContinue = () => {
-    if (selectedBot) {
-      navigate(`/chat/character/${selectedBot.id}`);
-    }
+  // Navigate directly to the chat page with the selected bot
+  const handleStartChat = (botId) => {
+    navigate(`/chat/character/${botId}`);
   };
 
   const handleCloseModal = () => {
@@ -226,10 +221,8 @@ const BotSelection = () => {
                       '&:hover': {
                         transform: 'translateY(-8px)',
                         boxShadow: `0 20px 40px ${theme.palette.primary.main}33`,
-                        cursor: 'pointer',
                       },
                     }}
-                    onClick={() => handleBotSelect(bot)}
                   >
                     {/* Bot Avatar Circle */}
                     <Box 
@@ -290,18 +283,30 @@ const BotSelection = () => {
                         {bot.description}
                       </Typography>
                       
-                      <Chip 
-                        label={selectedBot?.id === bot.id ? "Selected!" : "Select this bot"} 
-                        color={selectedBot?.id === bot.id ? "primary" : "default"}
-                        variant={selectedBot?.id === bot.id ? "filled" : "outlined"}
-                        sx={{ 
-                          alignSelf: 'center',
-                          fontWeight: 'medium',
-                          borderRadius: '12px',
-                          transition: 'all 0.3s ease',
-                          boxShadow: selectedBot?.id === bot.id ? `0 5px 15px ${theme.palette.primary.main}44` : 'none',
-                        }} 
-                      />
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="large"
+                        onClick={() => handleStartChat(bot.id)}
+                        endIcon={<Chat />}
+                        sx={{
+                          borderRadius: '14px',
+                          py: 1.5,
+                          px: 3,
+                          fontSize: '1rem',
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                          boxShadow: '0 8px 20px ' + theme.palette.primary.main + '44',
+                          '&:hover': {
+                            transform: 'translateY(-3px) scale(1.02)',
+                            boxShadow: '0 12px 25px ' + theme.palette.primary.main + '66'
+                          },
+                          transition: 'all 0.3s ease'
+                        }}
+                      >
+                        Start Chatting
+                      </Button>
                     </CardContent>
                   </Card>
                 </Grid>
@@ -309,41 +314,6 @@ const BotSelection = () => {
             );
           })}
         </Grid>
-        
-        {/* Continue Button */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          mt: { xs: 6, md: 8 },
-          position: 'relative'
-        }}>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            disabled={!selectedBot}
-            onClick={handleContinue}
-            endIcon={<ArrowForward />}
-            sx={{
-              borderRadius: '14px',
-              px: 6,
-              py: 2,
-              fontSize: '1.1rem',
-              textTransform: 'none',
-              fontWeight: 600,
-              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              boxShadow: selectedBot ? '0 8px 20px ' + theme.palette.primary.main + '44' : 'none',
-              opacity: selectedBot ? 1 : 0.7,
-              '&:hover': {
-                transform: selectedBot ? 'translateY(-3px) scale(1.02)' : 'none',
-                boxShadow: selectedBot ? '0 12px 25px ' + theme.palette.primary.main + '66' : 'none'
-              },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {selectedBot ? "Start Chatting" : "Select a Bot to Continue"}
-          </Button>
-        </Box>
       </Container>
 
       {/* Intro Modal */}
