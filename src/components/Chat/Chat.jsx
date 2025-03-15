@@ -18,6 +18,7 @@ import {
 import { Send, Psychology, School, Info, ExitToApp, PsychologyAlt } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
+import { handleAuthErrors } from '../../Api';
 
 // Import our custom components
 import MessageList from './MessageList';
@@ -108,7 +109,9 @@ const Chat = () => {
         }
       } catch (error) {
         console.error('Error creating chat session:', error);
-        if (error.response?.data?.error === 'Token has expired!') {
+        // Check if this is an auth-related error
+        if (error.response && handleAuthErrors(error.response, navigate)) {
+          // The handleAuthErrors function will handle redirection if necessary
           setSessionExpired(true);
           logout();
         } else {
@@ -185,7 +188,8 @@ const Chat = () => {
       }
     } catch (error) {
       console.error('Error generating report:', error);
-      if (error.response?.data?.error === 'Token has expired!') {
+      if (error.response && handleAuthErrors(error.response, navigate)) {
+        // The handleAuthErrors function will handle redirection if necessary
         setSessionExpired(true);
         logout();
       } else {
@@ -241,7 +245,8 @@ const Chat = () => {
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      if (error.response?.data?.error === 'Token has expired!') {
+      if (error.response && handleAuthErrors(error.response, navigate)) {
+        // The handleAuthErrors function will handle redirection if necessary
         setSessionExpired(true);
         logout();
       } else {

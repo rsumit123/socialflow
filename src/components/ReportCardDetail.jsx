@@ -38,6 +38,7 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import StarIcon from '@mui/icons-material/Star';
 import ConfettiExplosion from 'react-confetti-explosion';
+import { handleAuthErrors } from '../Api';
 
 const ReportCardDetail = () => {
   const theme = useTheme();
@@ -75,11 +76,8 @@ const ReportCardDetail = () => {
         }
       } catch (error) {
         console.error('Error fetching report card:', error);
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.error === 'Token has expired!'
-        ) {
+        if (error.response && handleAuthErrors(error.response, navigate)) {
+          // handleAuthErrors will handle the redirection
           setErrorMessage('Your session has expired. Please login again!');
           setOpenSnackbar(true);
         } else {

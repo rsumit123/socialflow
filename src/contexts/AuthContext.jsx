@@ -8,14 +8,54 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [initializing, setInitializing] = useState(true);
 
+  // Check token validity on initial load
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      // Assume user is logged in if token exists
-      setUser({ token });
-      // Optionally, verify token validity with the backend here
-    }
+    const validateToken = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setInitializing(false);
+          return;
+        }
+
+        // Try to make a request to validate the token
+        try {
+          // Try to use a lightweight endpoint to validate the token
+          // If the /api/auth/validate-token/ endpoint doesn't exist, use an endpoint that should work
+          try {
+            await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/protected/`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          } catch (e) {
+            // If the validation endpoint doesn't exist, try another lightweight endpoint
+            // like the user profile or some other endpoint that requires authentication
+            await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/me/`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          }
+          
+          // If any request succeeds, set the user
+          setUser({ token });
+        } catch (error) {
+          // If we get an auth error, the token is invalid/expired
+          if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            console.log("Token validation failed - clearing invalid token");
+            localStorage.removeItem('token');
+            setUser(null);
+          } else {
+            // For other errors (like network issues), still use the token but log the error
+            console.warn("Error validating token but proceeding:", error);
+            setUser({ token });
+          }
+        }
+      } finally {
+        setInitializing(false);
+      }
+    };
+
+    validateToken();
   }, []);
 
   // Add an interceptor to attach the token to outgoing requests on the main axios instance
@@ -97,7 +137,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, guestLogin }}>
+    <AuthContext.Provider value={{ user, login, logout, register, guestLogin, initializing }}>
       {children}
     </AuthContext.Provider>
   );
