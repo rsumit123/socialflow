@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
           // Try to use a lightweight endpoint to validate the token
           // If the /api/auth/validate-token/ endpoint doesn't exist, use an endpoint that should work
           try {
-            await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/validate-token/`, {
+            await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/protected/`, {
               headers: { Authorization: `Bearer ${token}` },
             });
           } catch (e) {
