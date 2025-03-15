@@ -1,6 +1,7 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { setupAxiosInterceptors } from './Api';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LandingPage from './components/LandingPage';
@@ -19,16 +20,61 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TOS';
 import LessonDetail from './components/LessonDetail/LessonDetail';
 import BotSelection from './components/BotSelection';
+import { Box, CircularProgress } from '@mui/material';
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth();
+  const { user, initializing } = useAuth();
+  
+  // Show a loading indicator while checking authentication
+  if (initializing) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+  
   return user ? children : <Navigate to="/login" />;
 };
 
 // Guest Route Component
 const GuestRoute = ({ children }) => {
-  const { user } = useAuth();
+  const { user, initializing } = useAuth();
+  
+  // Show a loading indicator while checking authentication
+  if (initializing) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+  
   return !user ? children : <Navigate to="/platform" />;
+};
+
+// Create a component to initialize the interceptor
+const InitializeInterceptor = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  
+  useEffect(() => {
+    // Pass both navigate and logout to properly handle auth errors
+    setupAxiosInterceptors(navigate, logout);
+  }, [navigate, logout]);
+  
+  return null;
 };
 
 function App() {
@@ -36,6 +82,7 @@ function App() {
     <AuthProvider>
       <Router>
         <Header />
+        <InitializeInterceptor />
         <Suspense fallback={<div>Loading...</div>}>
           <Routes>
             <Route path="/" element={<LandingPage />} />

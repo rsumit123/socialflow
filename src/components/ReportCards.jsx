@@ -19,6 +19,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { handleAuthErrors } from '../Api'; // Import handleAuthErrors
 
 // Register Chart.js components
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -42,13 +43,8 @@ const ReportCards = () => {
         setReportCards(response.data.report_cards); // Correctly accessing the array
       } catch (error) {
         console.error('Error fetching report cards:', error);
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.error === 'Token has expired!'
-        ) {
-          // Handle token expiration (similar to Chat.jsx)
-          // For simplicity, redirect to login with an alert
+        if (error.response && handleAuthErrors(error.response, navigate)) {
+          // handleAuthErrors will take care of redirection and token clearing
           setErrorMessage('Your session has expired. Please login again!');
           setOpenSnackbar(true);
         } else {
@@ -61,7 +57,7 @@ const ReportCards = () => {
     };
 
     fetchReportCards();
-  }, [user]);
+  }, [user, navigate]);
 
   // Prepare data for the Bar chart
   const chartData = {
