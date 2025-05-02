@@ -675,7 +675,8 @@ const CreativeLoading = () => {
 const PlatformPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  // const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [trainingLocked, setTrainingLocked] = useState(true);
@@ -690,6 +691,7 @@ const PlatformPage = () => {
   useEffect(() => {
     const checkTrainingStatus = async () => {
       try {
+        console.log("Checking training status...");
         const response = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/course_content/training_plan_status/`,
           {
@@ -698,7 +700,7 @@ const PlatformPage = () => {
         );
 
         // If auth error occurred, stop further processing.
-        if (handleAuthErrors(response, navigate)) return;
+        if (handleAuthErrors(response, navigate, logout)) return;
 
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
