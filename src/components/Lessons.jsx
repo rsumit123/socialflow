@@ -31,6 +31,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { handleAuthErrors } from '../Api';
+import { useQuery } from '@tanstack/react-query';
 
 const Lessons = () => {
   const theme = useTheme();
@@ -39,50 +40,58 @@ const Lessons = () => {
   const { subcategoryId } = useParams();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
-  const [lessons, setLessons] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [subcategoryInfo, setSubcategoryInfo] = useState({
-    name: '',
-    category: { name: '', id: '' },
-    is_locked: true
+
+  const fetchSubcategoryInfo = async () => {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/course_content/subcategories/${subcategoryId}/`,
+      {
+        headers: { Authorization: `Bearer ${user.token}` },
+      }
+    );
+    handleAuthErrors(response, navigate);
+    return response.json();
+  };
+
+  const fetchLessons = async () => {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/course_content/lessons/?subcategory_id=${subcategoryId}`,
+      {
+        headers: { Authorization: `Bearer ${user.token}` },
+      }
+    );
+    handleAuthErrors(response, navigate);
+    const data = await response.json();
+    return data.sort((a, b) => a.order - b.order);
+  };
+
+  const { 
+    data: subcategoryInfo, 
+    isLoading: isLoadingSubcategory, 
+    isError: isErrorSubcategory,
+    error: errorSubcategory
+  } = useQuery({
+    queryKey: ['subcategory', subcategoryId],
+    queryFn: fetchSubcategoryInfo,
+    enabled: !!user.token && !!subcategoryId,
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch subcategory info first
-        const subcategoryResponse = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/course_content/subcategories/${subcategoryId}/`,
-          {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }
-        );
-        
-        handleAuthErrors(subcategoryResponse, navigate);
-        const subcategoryData = await subcategoryResponse.json();
-        setSubcategoryInfo(subcategoryData);
-        
-        // Then fetch lessons
-        const lessonsResponse = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/course_content/lessons/?subcategory_id=${subcategoryId}`,
-          {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }
-        );
+  const { 
+    data: lessons = [], 
+    isLoading: isLoadingLessons, 
+    isError: isErrorLessons,
+    error: errorLessons
+  } = useQuery({
+    queryKey: ['lessons', subcategoryId],
+    queryFn: fetchLessons,
+    enabled: !!user.token && !!subcategoryId,
+  });
 
-        handleAuthErrors(lessonsResponse, navigate);
-        const lessonsData = await lessonsResponse.json();
-        setLessons(lessonsData.sort((a, b) => a.order - b.order));
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        // Add a small delay to prevent layout jumps
-        setTimeout(() => setLoading(false), 300);
-      }
-    };
+  const loading = isLoadingSubcategory || isLoadingLessons;
 
-    fetchData();
-  }, [subcategoryId, user.token, navigate]);
+  if (isErrorSubcategory || isErrorLessons) {
+    console.error('Error fetching data:', errorSubcategory || errorLessons);
+    return <Typography>Error loading lesson data.</Typography>;
+  }
 
   const handleLessonClick = (lesson) => {
     if (!lesson.is_locked) {
@@ -91,7 +100,7 @@ const Lessons = () => {
   };
   
   const handleIntroClick = () => {
-    if (!subcategoryInfo.is_locked) {
+    if (subcategoryInfo && !subcategoryInfo.is_locked) {
       navigate(`/training/intro/${subcategoryId}`);
     }
   };
@@ -165,7 +174,8 @@ const Lessons = () => {
         }}
       >
         <IconButton
-          onClick={() => navigate(`/training/subcategories/${subcategoryInfo.category.id}`)}
+          onClick={() => subcategoryInfo && navigate(`/training/subcategories/${subcategoryInfo.category.id}`)}
+          disabled={!subcategoryInfo}
           sx={{
             position: 'absolute',
             top: theme.spacing(1),
@@ -220,9 +230,9 @@ const Lessons = () => {
                 display: 'flex',
                 alignItems: 'center' 
               }}
-              onClick={() => navigate(`/training/subcategories/${subcategoryInfo.category.id}`)}
+              onClick={() => subcategoryInfo && navigate(`/training/subcategories/${subcategoryInfo.category.id}`)}
             >
-              {subcategoryInfo.category.name}
+              {subcategoryInfo?.category.name}
             </Link>
             <Typography 
               color="text.primary" 
@@ -232,7 +242,7 @@ const Lessons = () => {
                 alignItems: 'center'
               }}
             >
-              {subcategoryInfo.name}
+              {subcategoryInfo?.name}
             </Typography>
           </Breadcrumbs>
         </Box>
@@ -276,7 +286,7 @@ const Lessons = () => {
 
         <Grid container spacing={4} justifyContent="center">
           {/* Introduction Lesson Card - Always first and unlocked if subcategory is unlocked */}
-          {!loading && (
+          {!loading && subcategoryInfo && (
             <Grid item xs={12} sm={12} md={8} lg={6}>
               <Card
                 sx={{

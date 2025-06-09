@@ -39,6 +39,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import StarIcon from '@mui/icons-material/Star';
 import ConfettiExplosion from 'react-confetti-explosion';
 import { handleAuthErrors } from '../Api';
+import { useQuery } from '@tanstack/react-query';
 
 const ReportCardDetail = () => {
   const theme = useTheme();
@@ -46,51 +47,47 @@ const ReportCardDetail = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const { user } = useAuth();
   const { session_id } = useParams();
-  const [reportCard, setReportCard] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [isExploding, setIsExploding] = useState(false);
 
-  useEffect(() => {
-    const fetchReportCard = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/report/chat/sessions/${session_id}/report-card/`,
-          {
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
-        setReportCard(response.data);
-        
-        // Check if this is the first report
-        if (response.data.first_report === true) {
-          // Wait 5 seconds before showing the modal
-          setTimeout(() => {
-            setShowCongratulations(true);
-            setIsExploding(true);
-          }, 5000);
+  const fetchReportCard = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/report/chat/sessions/${session_id}/report-card/`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
         }
-      } catch (error) {
-        console.error('Error fetching report card:', error);
-        if (error.response && handleAuthErrors(error.response, navigate)) {
-          // handleAuthErrors will handle the redirection
-          setErrorMessage('Your session has expired. Please login again!');
-          setOpenSnackbar(true);
-        } else {
-          setErrorMessage('Failed to load the report card.');
-          setOpenSnackbar(true);
-        }
-      } finally {
-        setLoading(false);
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching report card:', error);
+      if (error.response && handleAuthErrors(error.response, navigate)) {
+        setErrorMessage('Your session has expired. Please login again!');
+      } else {
+        setErrorMessage('Failed to load the report card.');
       }
-    };
+      setOpenSnackbar(true);
+      throw error;
+    }
+  };
 
-    fetchReportCard();
-  }, [session_id, user.token]);
+  const { data: reportCard, isLoading: loading } = useQuery({
+    queryKey: ['reportCard', session_id],
+    queryFn: fetchReportCard,
+    enabled: !!user.token,
+    onSuccess: (data) => {
+      if (data.first_report === true) {
+        setTimeout(() => {
+          setShowCongratulations(true);
+          setIsExploding(true);
+        }, 5000);
+      }
+    },
+  });
 
   const handleStartTraining = () => {
     setShowCongratulations(false);

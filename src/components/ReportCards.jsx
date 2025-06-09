@@ -20,6 +20,7 @@ import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { handleAuthErrors } from '../Api'; // Import handleAuthErrors
+import { useQuery } from '@tanstack/react-query';
 
 // Register Chart.js components
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -27,37 +28,34 @@ Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 const ReportCards = () => {
   const { user } = useAuth();
   const navigate = useNavigate(); // Initialize useNavigate
-  const [reportCards, setReportCards] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
-  useEffect(() => {
-    const fetchReportCards = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/report/report-cards/`, {
-          headers: {
-            Authorization: `Bearer ${user.token}`, // Ensure user.token is correctly set
-          },
-        });
-        setReportCards(response.data.report_cards); // Correctly accessing the array
-      } catch (error) {
-        console.error('Error fetching report cards:', error);
-        if (error.response && handleAuthErrors(error.response, navigate)) {
-          // handleAuthErrors will take care of redirection and token clearing
-          setErrorMessage('Your session has expired. Please login again!');
-          setOpenSnackbar(true);
-        } else {
-          setErrorMessage('Failed to load report cards.');
-          setOpenSnackbar(true);
-        }
-      } finally {
-        setLoading(false);
+  const fetchReportCards = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/report/report-cards/`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+      return response.data.report_cards;
+    } catch (error) {
+      console.error('Error fetching report cards:', error);
+      if (error.response && handleAuthErrors(error.response, navigate)) {
+        setErrorMessage('Your session has expired. Please login again!');
+      } else {
+        setErrorMessage('Failed to load report cards.');
       }
-    };
+      setOpenSnackbar(true);
+      throw error; // Re-throw to be caught by React Query's isError state
+    }
+  };
 
-    fetchReportCards();
-  }, [user, navigate]);
+  const { data: reportCards = [], isLoading: loading } = useQuery({
+    queryKey: ['reportCards', user.token],
+    queryFn: fetchReportCards,
+    enabled: !!user.token,
+  });
 
   // Prepare data for the Bar chart
   const chartData = {

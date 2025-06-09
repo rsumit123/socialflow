@@ -26,6 +26,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { handleAuthErrors } from '../Api';
+import { useQuery } from '@tanstack/react-query';
 
 const Categories = () => {
   const theme = useTheme();
@@ -33,8 +34,21 @@ const Categories = () => {
   const { user } = useAuth();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  const fetchCategories = async () => {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/course_content/categories/`, {
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+    if (handleAuthErrors(response, navigate)) throw new Error("Authentication failed");
+    const data = await response.json();
+    return data.sort((a, b) => a.order - b.order);
+  };
+
+  const { data: categories = [], isLoading: loading, isError, error } = useQuery({
+    queryKey: ['categories'],
+    queryFn: fetchCategories,
+    enabled: !!user.token, // Only run the query if the user token is available
+  });
 
   // Map of category icons based on category name keywords
   const getCategoryIcon = (name) => {
@@ -49,25 +63,11 @@ const Categories = () => {
     return <Explore fontSize="large" />;
   };
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/course_content/categories/`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        if (handleAuthErrors(response, navigate)) return;
-        const data = await response.json();
-        setCategories(data.sort((a, b) => a.order - b.order));
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        // Add a small delay to prevent layout jumps
-        setTimeout(() => setLoading(false), 300);
-      }
-    };
-
-    fetchCategories();
-  }, [user.token, navigate]);
+  if (isError) {
+    console.error('Error fetching categories:', error);
+    // Optionally, you can render an error state here
+    return <Typography>Error loading categories.</Typography>;
+  }
 
   const handleCategoryClick = (categoryId, isLocked) => {
     if (!isLocked) {

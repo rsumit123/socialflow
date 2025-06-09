@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 const BotSelection = () => {
   const theme = useTheme();
@@ -34,34 +35,22 @@ const BotSelection = () => {
   const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   
-  const [bots, setBots] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const fetchBots = async () => {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/chat/bots/`);
+    if (!response.ok) {
+      throw new Error('Error fetching bots');
+    }
+    return response.json();
+  };
+
+  const { data: bots = [], isLoading: loading } = useQuery({
+    queryKey: ['bots'],
+    queryFn: fetchBots,
+  });
+
   const [selectedBot, setSelectedBot] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [startAnimation, setStartAnimation] = useState(false);
-
-  useEffect(() => {
-    const fetchBots = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/chat/bots/`);
-        if (!response.ok) {
-          throw new Error('Error fetching bots');
-        }
-        const data = await response.json();
-        setBots(data);
-        setLoading(false);
-        // Open the intro modal after a short delay
-        // setTimeout(() => {
-        //   setOpenModal(true);
-        // }, 500);
-      } catch (error) {
-        console.error('Error fetching bots:', error);
-        setLoading(false);
-      }
-    };
-    fetchBots();
-  }, []);
 
   useEffect(() => {
     // Start the staggered animation after component mounts

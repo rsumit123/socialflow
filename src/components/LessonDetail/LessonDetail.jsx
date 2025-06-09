@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 import LoadingScreen from '../../components/LessonDetail/LoadingScreen';
 import ModalContent from '../../components/LessonDetail/ModalContent';
@@ -35,11 +36,51 @@ const LessonDetail = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const { lessonId } = useParams();
 
+  // API Fetching functions
+  const fetchLessonDetails = async () => {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/course_content/lessons/${lessonId}/`,
+      { headers: { Authorization: `Bearer ${user.token}` } }
+    );
+    if (handleAuthErrors(response, navigate)) throw new Error("Failed to fetch lesson details");
+    return response.json();
+  };
+
+  const fetchPreviousAttempts = async () => {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/course_content/lesson-progress/?lesson_id=${lessonId}`,
+      { headers: { Authorization: `Bearer ${user.token}` } }
+    );
+    if (handleAuthErrors(response, navigate)) throw new Error("Failed to fetch previous attempts");
+    const data = await response.json();
+    return (data[0]?.lesson.previous_progress.slice(-3) || []).reverse();
+  };
+
+  // React Query hooks
+  const { 
+    data: lesson, 
+    isLoading: isLessonLoading, 
+    isError: isLessonError, 
+    error: lessonError 
+  } = useQuery({
+    queryKey: ['lesson', lessonId],
+    queryFn: fetchLessonDetails,
+    enabled: !!user.token,
+  });
+
+  const {
+    data: previousAttempts = [],
+    isLoading: areAttemptsLoading,
+    isError: isAttemptsError,
+    error: attemptsError
+  } = useQuery({
+    queryKey: ['previousAttempts', lessonId],
+    queryFn: fetchPreviousAttempts,
+    enabled: !!user.token,
+  });
+
   // Component state
-  const [lesson, setLesson] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [attemptsLoading, setAttemptsLoading] = useState(true);
   const [modalStep, setModalStep] = useState(1);
   const [showModal, setShowModal] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState(null);
@@ -47,50 +88,25 @@ const LessonDetail = () => {
   const [challengeActive, setChallengeActive] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [result, setResult] = useState(null);
-  const [previousAttempts, setPreviousAttempts] = useState([]);
   const [startTime, setStartTime] = useState(null);
   const timerRef = useRef(null);
 
   useEffect(() => {
-    fetchLessonDetails();
-    fetchPreviousAttempts();
+    if (lesson) {
+      setTimeRemaining(lesson.max_time);
+    }
+  }, [lesson]);
+  
+  useEffect(() => {
     return () => clearInterval(timerRef.current);
-  }, [lessonId]);
+  }, []);
 
-  const fetchLessonDetails = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/course_content/lessons/${lessonId}/`,
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-      if (handleAuthErrors(response, navigate)) return;
-      const data = await response.json();
-      setLesson(data);
-      setTimeRemaining(data.max_time);
-    } catch (error) {
-      console.error('Error fetching lesson:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = isLessonLoading || areAttemptsLoading;
 
-  const fetchPreviousAttempts = async () => {
-    setAttemptsLoading(true);
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/course_content/lesson-progress/?lesson_id=${lessonId}`,
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-      const data = await response.json();
-      setPreviousAttempts(
-        (data[0]?.lesson.previous_progress.slice(-3) || []).reverse()
-      );
-    } catch (error) {
-      console.error('Error fetching previous attempts:', error);
-    } finally {
-      setAttemptsLoading(false);
-    }
-  };
+  if (isLessonError || isAttemptsError) {
+    console.error('Error fetching data:', lessonError || attemptsError);
+    return <Typography>Error loading lesson data.</Typography>;
+  }
 
   const startChallenge = () => {
     setChallengeActive(true);
@@ -376,7 +392,7 @@ const LessonDetail = () => {
           </>
         )}
 
-        <PreviousAttempts attemptsLoading={attemptsLoading} previousAttempts={previousAttempts} />
+        <PreviousAttempts attemptsLoading={areAttemptsLoading} previousAttempts={previousAttempts} />
       </Box>
     </Container>
   );

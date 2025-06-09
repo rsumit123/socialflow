@@ -31,6 +31,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { handleAuthErrors } from '../Api';
+import { useQuery } from '@tanstack/react-query';
 
 const SubCategories = () => {
   const theme = useTheme();
@@ -39,9 +40,26 @@ const SubCategories = () => {
   const { categoryId } = useParams();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
-  const [subcategories, setSubcategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [categoryName, setCategoryName] = useState('');
+
+  const fetchSubcategories = async () => {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/course_content/subcategories/?category_id=${categoryId}`,
+      {
+        headers: { Authorization: `Bearer ${user.token}` },
+      }
+    );
+    if (handleAuthErrors(response, navigate)) throw new Error("Authentication failed");
+    const data = await response.json();
+    return data.sort((a, b) => a.order - b.order);
+  };
+
+  const { data: subcategories = [], isLoading: loading, isError, error } = useQuery({
+    queryKey: ['subcategories', categoryId],
+    queryFn: fetchSubcategories,
+    enabled: !!user.token && !!categoryId,
+  });
+
+  const categoryName = subcategories.length > 0 ? subcategories[0].category.name : '';
 
   // Map of subcategory icons based on name keywords
   const getSubcategoryIcon = (name) => {
@@ -60,31 +78,10 @@ const SubCategories = () => {
     return <School fontSize="large" />;
   };
 
-  useEffect(() => {
-    const fetchSubcategories = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/course_content/subcategories/?category_id=${categoryId}`,
-          {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }
-        );
-        if (handleAuthErrors(response, navigate)) return;
-        const data = await response.json();
-        setSubcategories(data.sort((a, b) => a.order - b.order));
-        if (data.length > 0) {
-          setCategoryName(data[0].category.name);
-        }
-      } catch (error) {
-        console.error('Error fetching subcategories:', error);
-      } finally {
-        // Add a small delay to prevent layout jumps
-        setTimeout(() => setLoading(false), 300);
-      }
-    };
-
-    fetchSubcategories();
-  }, [categoryId, user.token, navigate]);
+  if (isError) {
+    console.error('Error fetching subcategories:', error);
+    return <Typography>Error loading subcategories.</Typography>;
+  }
 
   const handleSubcategoryClick = (subcategoryId, isLocked) => {
     if (!isLocked) {

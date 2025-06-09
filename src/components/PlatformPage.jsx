@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { handleAuthErrors } from '../Api';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Box, 
   Grid, 
@@ -675,62 +676,36 @@ const CreativeLoading = () => {
 const PlatformPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  // const { user } = useAuth();
   const { user, logout } = useAuth();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const [trainingLocked, setTrainingLocked] = useState(true);
-  const [loading, setLoading] = useState(true);
   
-  // When this is true, we highlight the "Evaluate" module
   const [highlightEvaluate, setHighlightEvaluate] = useState(false);
-
-  // Controls the modal
   const [showLockedModal, setShowLockedModal] = useState(false);
 
-  useEffect(() => {
-    const checkTrainingStatus = async () => {
-      try {
-        console.log("Checking training status...");
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/course_content/training_plan_status/`,
-          {
-            headers: { Authorization: `Bearer ${user?.token}` },
-          }
-        );
-
-        // If auth error occurred, stop further processing.
-        if (handleAuthErrors(response, navigate, logout)) return;
-
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        setTrainingLocked(data.new_user);
-
-        // If locked, show modal
-        if (data.new_user) {
-          setShowLockedModal(true);
-        }
-      } catch (error) {
-        console.error("Error checking training status:", error);
-      } finally {
-        setLoading(false);
+  const fetchTrainingStatus = async () => {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/course_content/training_plan_status/`,
+      {
+        headers: { Authorization: `Bearer ${user?.token}` },
       }
-    };
+    );
+    if (handleAuthErrors(response, navigate, logout)) throw new Error("Failed to fetch training status");
+    return response.json();
+  };
 
-    if (user?.token) {
-      checkTrainingStatus();
-    } else {
-      setLoading(false);
-    }
-  }, [navigate, user?.token]);
+  const { data: trainingStatus, isLoading } = useQuery({
+    queryKey: ['trainingPlanStatus', user?.token],
+    queryFn: fetchTrainingStatus,
+    enabled: !!user?.token,
+    onSuccess: (data) => {
+      if (data.new_user) {
+        setShowLockedModal(true);
+      }
+    },
+  });
 
-  // Called when the modal is dismissed by clicking outside or "Maybe Later"
   const handleDismissModal = () => {
     setShowLockedModal(false);
-    // highlight the Evaluate module so user sees it
     setHighlightEvaluate(true);
   };
 
@@ -764,7 +739,7 @@ const PlatformPage = () => {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <CreativeLoading />;
   }
 
@@ -772,134 +747,136 @@ const PlatformPage = () => {
     <>
       <LockedModal open={showLockedModal} onDismiss={handleDismissModal} />
 
-      <Box
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          minHeight: '80vh',
-          py: { xs: 6, md: 10 },
-          background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: `radial-gradient(circle at 30% 70%, ${theme.palette.primary.main}22, transparent 25%), 
-                         radial-gradient(circle at 70% 30%, ${theme.palette.secondary.main}22, transparent 25%)`,
-            backgroundSize: '60px 60px',
-            opacity: 0.3,
-          },
-        }}
-      >
-        <Container maxWidth="lg">
-          <Typography
-            variant={isSmallScreen ? 'h4' : 'h3'}
-            sx={{
-              fontWeight: 'bold',
-              textAlign: 'center',
-              mb: 4,
-              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Welcome to SocialFlow!
-          </Typography>
+      <Box sx={{ flexGrow: 1, backgroundColor: theme.palette.background.default }}>
+        <Box
+          sx={{
+            position: 'relative',
+            overflow: 'hidden',
+            minHeight: '80vh',
+            py: { xs: 6, md: 10 },
+            background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: `radial-gradient(circle at 30% 70%, ${theme.palette.primary.main}22, transparent 25%), 
+                           radial-gradient(circle at 70% 30%, ${theme.palette.secondary.main}22, transparent 25%)`,
+              backgroundSize: '60px 60px',
+              opacity: 0.3,
+            },
+          }}
+        >
+          <Container maxWidth="lg">
+            <Typography
+              variant={isSmallScreen ? 'h4' : 'h3'}
+              sx={{
+                fontWeight: 'bold',
+                textAlign: 'center',
+                mb: 4,
+                background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Welcome to SocialFlow!
+            </Typography>
 
-          <Grid container spacing={4} justifyContent="center">
-            {modules.map((module, index) => {
-              // If highlightEvaluate is true, add a special highlight style to the Evaluate module
-              const isEvaluate = module.title === 'Evaluate';
-              const highlightStyle = highlightEvaluate && isEvaluate ? {
-                animation: 'highlightPulse 1.5s infinite alternate',
-                border: `2px solid ${theme.palette.secondary.main}aa`,
-              } : {};
+            <Grid container spacing={4} justifyContent="center">
+              {modules.map((module, index) => {
+                // If highlightEvaluate is true, add a special highlight style to the Evaluate module
+                const isEvaluate = module.title === 'Evaluate';
+                const highlightStyle = highlightEvaluate && isEvaluate ? {
+                  animation: 'highlightPulse 1.5s infinite alternate',
+                  border: `2px solid ${theme.palette.secondary.main}aa`,
+                } : {};
 
-              return (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Box
-                    sx={{
-                      borderRadius: '20px',
-                      transition: 'all 0.3s ease',
-                      cursor: module.locked ? 'not-allowed' : 'pointer',
-                      position: 'relative',
-                      background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
-                      border: `1px solid ${theme.palette.primary.main}11`,
-                      boxShadow: 4,
-                      '&:hover': {
-                        transform: module.locked ? 'none' : 'translateY(-12px)',
-                        boxShadow: module.locked
-                          ? 4
-                          : `0 20px 40px ${theme.palette.primary.main}22`,
-                      },
-                      height: '100%',
-                      p: 4,
-                      textAlign: 'center',
-                      '@keyframes highlightPulse': {
-                        '0%': { boxShadow: `0 0 0 0 ${theme.palette.secondary.main}` },
-                        '100%': { boxShadow: `0 0 10px 6px ${theme.palette.secondary.main}44` },
-                      },
-                      ...highlightStyle,
-                    }}
-                    onClick={() => handleModuleClick(module.path, module.locked)}
-                  >
-                    {/* Icon + Lock overlay if locked */}
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={index}>
                     <Box
                       sx={{
-                        mb: 2,
+                        borderRadius: '20px',
+                        transition: 'all 0.3s ease',
+                        cursor: module.locked ? 'not-allowed' : 'pointer',
                         position: 'relative',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 80,
-                        height: 80,
+                        background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+                        border: `1px solid ${theme.palette.primary.main}11`,
+                        boxShadow: 4,
+                        '&:hover': {
+                          transform: module.locked ? 'none' : 'translateY(-12px)',
+                          boxShadow: module.locked
+                            ? 4
+                            : `0 20px 40px ${theme.palette.primary.main}22`,
+                        },
+                        height: '100%',
+                        p: 4,
+                        textAlign: 'center',
+                        '@keyframes highlightPulse': {
+                          '0%': { boxShadow: `0 0 0 0 ${theme.palette.secondary.main}` },
+                          '100%': { boxShadow: `0 0 10px 6px ${theme.palette.secondary.main}44` },
+                        },
+                        ...highlightStyle,
                       }}
+                      onClick={() => handleModuleClick(module.path, module.locked)}
                     >
-                      {module.icon}
-                      {module.locked && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            borderRadius: '50%',
-                            width: 40,
-                            height: 40,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Lock sx={{ color: 'white' }} />
-                        </Box>
-                      )}
-                    </Box>
+                      {/* Icon + Lock overlay if locked */}
+                      <Box
+                        sx={{
+                          mb: 2,
+                          position: 'relative',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 80,
+                          height: 80,
+                        }}
+                      >
+                        {module.icon}
+                        {module.locked && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              backgroundColor: 'rgba(0,0,0,0.5)',
+                              borderRadius: '50%',
+                              width: 40,
+                              height: 40,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Lock sx={{ color: 'white' }} />
+                          </Box>
+                        )}
+                      </Box>
 
-                    <Typography
-                      variant="h5"
-                      sx={{
-                        fontWeight: 'bold',
-                        mb: 2,
-                        color: module.locked ? 'text.disabled' : 'text.primary',
-                      }}
-                    >
-                      {module.title}
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        color: module.locked ? 'text.disabled' : 'text.secondary',
-                      }}
-                    >
-                      {module.description}
-                    </Typography>
-                  </Box>
-                </Grid>
-              );
-            })}
-          </Grid>
-        </Container>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 'bold',
+                          mb: 2,
+                          color: module.locked ? 'text.disabled' : 'text.primary',
+                        }}
+                      >
+                        {module.title}
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: module.locked ? 'text.disabled' : 'text.secondary',
+                        }}
+                      >
+                        {module.description}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Container>
+        </Box>
       </Box>
     </>
   );
