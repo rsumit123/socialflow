@@ -32,7 +32,8 @@ import {
   Lightbulb,
   SelfImprovement,
   Groups,
-  RecordVoiceOver
+  RecordVoiceOver,
+  Stars
 } from '@mui/icons-material';
 
 const LockedModal = ({ open, onDismiss }) => {
@@ -729,6 +730,13 @@ const PlatformPage = () => {
       icon: <School sx={{ fontSize: 40 }} />,
       description: 'Access structured learning modules and exercises',
       path: '/training/1',
+      locked: false,
+    },
+    {
+      title: 'Featured Scenarios',
+      icon: <Stars sx={{ fontSize: 40 }} />,
+      description: 'Jump directly into a variety of practice scenarios.',
+      path: '/all-scenarios',
       locked: false,
     },
   ];

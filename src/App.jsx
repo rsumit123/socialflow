@@ -20,6 +20,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TOS';
 import LessonDetail from './components/LessonDetail/LessonDetail';
 import BotSelection from './components/BotSelection';
+import AllLessons from './components/AllLessons';
 import { Box, CircularProgress } from '@mui/material';
 
 // Protected Route Component
@@ -185,6 +186,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <LessonDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/all-scenarios"
+              element={
+                <ProtectedRoute>
+                  <AllLessons />
                 </ProtectedRoute>
               }
             />
