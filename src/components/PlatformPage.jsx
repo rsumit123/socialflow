@@ -715,7 +715,7 @@ const PlatformPage = () => {
     {
       title: 'Dynamic Dialogues',
       icon: <Chat sx={{ fontSize: 40 }} />,
-      description: 'Practice your communication skills -> Get Feedback -> Repeat',
+      description: 'Step into realistic chats with AI personas. Learn to navigate different communication styles and keep the conversation going.',
       path: '/bots',
       locked: false,
     },
