@@ -720,7 +720,7 @@ const PlatformPage = () => {
       locked: false,
     },
     {
-      title: 'Report Cards',
+      title: 'Reports',
       icon: <Assessment sx={{ fontSize: 40 }} />,
       description: 'Review your performance and track your progress',
       path: '/report-cards',
