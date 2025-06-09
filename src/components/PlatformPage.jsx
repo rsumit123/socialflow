@@ -17,7 +17,8 @@ import {
   Stack,
   Divider,
   Paper,
-  Avatar
+  Avatar,
+  Chip
 } from '@mui/material';
 import { 
   Lock, 
@@ -41,8 +42,8 @@ const LockedModal = ({ open, onDismiss }) => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   
-  const handleIcebreaking = () => {
-    navigate('/training/subcategories/4');
+  const handleStartScenarios = () => {
+    navigate('/all-scenarios');
   };
   
   return (
@@ -190,7 +191,7 @@ const LockedModal = ({ open, onDismiss }) => {
                 letterSpacing: '0.5px',
               }}
             >
-              You've Unlocked a New Journey!
+              Ready to Practice?
             </Typography>
             
             <Typography
@@ -205,7 +206,7 @@ const LockedModal = ({ open, onDismiss }) => {
                 mx: 'auto'
               }}
             >
-              Take your first step toward building meaningful connections with our interactive icebreaker exercises.
+              Jump into our featured scenarios to practice your social skills in a variety of situations.
             </Typography>
           </Box>
           
@@ -304,7 +305,7 @@ const LockedModal = ({ open, onDismiss }) => {
               variant="contained"
               color="primary"
               size={isSmallScreen ? "medium" : "large"}
-              onClick={handleIcebreaking}
+              onClick={handleStartScenarios}
               endIcon={<ArrowForward />}
               sx={{
                 borderRadius: '14px',
@@ -330,7 +331,7 @@ const LockedModal = ({ open, onDismiss }) => {
                 width: { xs: '100%', sm: 'auto' }
               }}
             >
-              Start Icebreaker Lessons
+              Explore Featured Scenarios
             </Button>
             
             {/* Skip option for mobile */}
@@ -680,7 +681,6 @@ const PlatformPage = () => {
   const { user, logout } = useAuth();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   
-  const [highlightEvaluate, setHighlightEvaluate] = useState(false);
   const [showLockedModal, setShowLockedModal] = useState(false);
 
   const fetchTrainingStatus = async () => {
@@ -698,21 +698,22 @@ const PlatformPage = () => {
     queryKey: ['trainingPlanStatus', user?.token],
     queryFn: fetchTrainingStatus,
     enabled: !!user?.token,
-    onSuccess: (data) => {
-      if (data.new_user) {
-        setShowLockedModal(true);
-      }
-    },
   });
+  
+  useEffect(() => {
+    if (trainingStatus?.new_user && !sessionStorage.getItem('newUserModalDismissed')) {
+      setShowLockedModal(true);
+    }
+  }, [trainingStatus]);
 
   const handleDismissModal = () => {
     setShowLockedModal(false);
-    setHighlightEvaluate(true);
+    sessionStorage.setItem('newUserModalDismissed', 'true');
   };
 
   const modules = [
     {
-      title: 'Chat & Check',
+      title: 'Dynamic Dialogues',
       icon: <Chat sx={{ fontSize: 40 }} />,
       description: 'Practice your communication skills -> Get Feedback -> Repeat',
       path: '/bots',
@@ -726,18 +727,12 @@ const PlatformPage = () => {
       locked: false,
     },
     {
-      title: 'Training Plan',
-      icon: <School sx={{ fontSize: 40 }} />,
-      description: 'Access structured learning modules and exercises',
-      path: '/training/1',
-      locked: false,
-    },
-    {
       title: 'Featured Scenarios',
       icon: <Stars sx={{ fontSize: 40 }} />,
       description: 'Jump directly into a variety of practice scenarios.',
       path: '/all-scenarios',
       locked: false,
+      isFeatured: true,
     },
   ];
 
@@ -791,11 +786,16 @@ const PlatformPage = () => {
 
             <Grid container spacing={4} justifyContent="center">
               {modules.map((module, index) => {
-                // If highlightEvaluate is true, add a special highlight style to the Evaluate module
-                const isEvaluate = module.title === 'Evaluate';
-                const highlightStyle = highlightEvaluate && isEvaluate ? {
-                  animation: 'highlightPulse 1.5s infinite alternate',
-                  border: `2px solid ${theme.palette.secondary.main}aa`,
+                const featuredStyles = module.isFeatured ? {
+                  animation: 'pulse-glow 2.5s infinite alternate',
+                  '@keyframes pulse-glow': {
+                    'from': {
+                      boxShadow: `0 8px 25px -5px ${theme.palette.primary.main}33, 0 5px 15px -6px ${theme.palette.primary.main}22`,
+                    },
+                    'to': {
+                      boxShadow: `0 8px 30px -5px ${theme.palette.secondary.main}44, 0 5px 20px -6px ${theme.palette.secondary.main}33`,
+                    },
+                  },
                 } : {};
 
                 return (
@@ -813,19 +813,34 @@ const PlatformPage = () => {
                           transform: module.locked ? 'none' : 'translateY(-12px)',
                           boxShadow: module.locked
                             ? 4
+                            : module.isFeatured
+                            ? `0 12px 35px -5px ${theme.palette.secondary.main}55, 0 8px 25px -6px ${theme.palette.secondary.main}44`
                             : `0 20px 40px ${theme.palette.primary.main}22`,
                         },
                         height: '100%',
                         p: 4,
                         textAlign: 'center',
-                        '@keyframes highlightPulse': {
-                          '0%': { boxShadow: `0 0 0 0 ${theme.palette.secondary.main}` },
-                          '100%': { boxShadow: `0 0 10px 6px ${theme.palette.secondary.main}44` },
-                        },
-                        ...highlightStyle,
+                        ...featuredStyles,
                       }}
                       onClick={() => handleModuleClick(module.path, module.locked)}
                     >
+                      {module.isFeatured && (
+                        <Chip
+                          icon={<Stars sx={{ color: 'white !important' }}/>}
+                          label="Recommended"
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 16,
+                            right: 16,
+                            zIndex: 2,
+                            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                            color: 'white',
+                            fontWeight: 600,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                          }}
+                        />
+                      )}
                       {/* Icon + Lock overlay if locked */}
                       <Box
                         sx={{
