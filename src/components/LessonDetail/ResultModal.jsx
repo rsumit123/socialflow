@@ -15,9 +15,8 @@ const ResultModal = React.forwardRef((props, ref) => {
     
     if (result?.next_lesson_url) {
       // Extract relative URL from the absolute URL provided by the backend
-    //   const nextUrl = new URL(result.next_lesson_url).pathname;
-      navigate("/training/subcategories/4");
-    // window.location.href = result.next_lesson_url;
+      const nextUrl = new URL(result.next_lesson_url).pathname;
+      navigate(nextUrl);
     }
   };
 
