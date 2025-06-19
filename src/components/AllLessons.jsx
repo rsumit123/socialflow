@@ -21,6 +21,8 @@ import {
   MenuItem,
   Fade,
   Zoom,
+  Collapse,
+  Button,
 } from '@mui/material';
 import { 
   ArrowBack,
@@ -35,6 +37,8 @@ import {
   CheckCircle,
   Star,
   FilterList,
+  ExpandMore,
+  ExpandLess,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,10 +52,15 @@ const AllLessons = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [page, setPage] = React.useState(1);
   const [selectedCategoryId, setSelectedCategoryId] = React.useState('');
+  const [filtersExpanded, setFiltersExpanded] = React.useState(!isSmallScreen);
 
   React.useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  React.useEffect(() => {
+    setFiltersExpanded(!isSmallScreen);
+  }, [isSmallScreen]);
 
   const fetchUnlockedLessons = async (page, categoryId) => {
     const limit = 10;
@@ -233,133 +242,178 @@ const AllLessons = () => {
           </Typography>
         </Box>
 
-        <Box sx={{ mb: 6 }}>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography
-              variant="h6"
+        <Box sx={{ mb: isSmallScreen ? 3 : 6 }}>
+          {isSmallScreen && (
+            <Box sx={{ textAlign: 'center', mb: 2 }}>
+              <Button
+                onClick={() => setFiltersExpanded(!filtersExpanded)}
+                variant="outlined"
+                sx={{
+                  borderRadius: '25px',
+                  px: 3,
+                  py: 1,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderColor: theme.palette.primary.main,
+                  color: theme.palette.primary.main,
+                  '&:hover': {
+                    backgroundColor: theme.palette.primary.main,
+                    color: 'white',
+                    transform: 'scale(1.02)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+                startIcon={<FilterList />}
+                endIcon={filtersExpanded ? <ExpandLess /> : <ExpandMore />}
+              >
+                {filtersExpanded ? 'Hide Filters' : 'Show Filters'}
+                {selectedCategoryId && !filtersExpanded && (
+                  <Chip
+                    label={categories.find(c => c.id === selectedCategoryId)?.name || 'Filtered'}
+                    size="small"
+                    sx={{
+                      ml: 1,
+                      height: 20,
+                      fontSize: '0.7rem',
+                      backgroundColor: theme.palette.primary.main,
+                      color: 'white',
+                    }}
+                  />
+                )}
+              </Button>
+            </Box>
+          )}
+          
+          <Collapse in={filtersExpanded} timeout={400}>
+            <Box sx={{ textAlign: 'center', mb: isSmallScreen ? 2 : 3 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                  mb: 2,
+                  fontSize: isSmallScreen ? '1rem' : '1.25rem',
+                }}
+              >
+                <FilterList sx={{ fontSize: isSmallScreen ? 18 : 20 }} />
+                Choose Your Vibe
+              </Typography>
+            </Box>
+            
+            <Box
               sx={{
-                fontWeight: 600,
-                color: 'text.secondary',
                 display: 'flex',
-                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: isSmallScreen ? 1.5 : 2,
                 justifyContent: 'center',
-                gap: 1,
-                mb: 2,
+                maxWidth: '800px',
+                mx: 'auto',
+                px: 2,
               }}
             >
-              <FilterList sx={{ fontSize: 20 }} />
-              Choose Your Vibe
-            </Typography>
-          </Box>
-          
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 2,
-              justifyContent: 'center',
-              maxWidth: '800px',
-              mx: 'auto',
-              px: 2,
-            }}
-          >
-            <Zoom in timeout={300}>
-              <Chip
-                label="All Categories"
-                onClick={() => handleCategoryChange({ target: { value: '' } })}
-                variant={selectedCategoryId === '' ? 'filled' : 'outlined'}
-                sx={{
-                  px: 3,
-                  py: 2,
-                  height: 'auto',
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  borderRadius: '25px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  backgroundColor: selectedCategoryId === '' 
-                    ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
-                    : 'transparent',
-                  color: selectedCategoryId === '' ? 'white' : 'text.primary',
-                  border: selectedCategoryId === '' 
-                    ? 'none' 
-                    : `2px solid ${theme.palette.divider}`,
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: selectedCategoryId === '' 
-                      ? `0 8px 25px ${theme.palette.primary.main}44`
-                      : `0 8px 25px ${theme.palette.grey[400]}44`,
-                    backgroundColor: selectedCategoryId === '' 
-                      ? `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`
-                      : theme.palette.action.hover,
-                  },
-                  '& .MuiChip-label': {
-                    padding: '8px 16px',
-                  },
-                }}
-                icon={<AutoAwesome sx={{ fontSize: 20 }} />}
-              />
-            </Zoom>
-            
-            {categories.map((category, index) => {
-              const { icon, color } = getCategoryVisuals(category.name);
-              const isSelected = selectedCategoryId === category.id;
-              
-              return (
-                <Zoom in timeout={400 + index * 100} key={category.id}>
-                  <Chip
-                    label={category.name}
-                    onClick={() => handleCategoryChange({ target: { value: category.id } })}
-                    variant={isSelected ? 'filled' : 'outlined'}
-                    sx={{
-                      px: 3,
-                      py: 2,
-                      height: 'auto',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      borderRadius: '25px',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      backgroundColor: isSelected ? color : 'transparent',
-                      color: isSelected ? 'white' : 'text.primary',
-                      border: isSelected ? 'none' : `2px solid ${color}44`,
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: `0 8px 25px ${color}44`,
-                        backgroundColor: isSelected ? color : `${color}11`,
-                        borderColor: isSelected ? 'transparent' : color,
-                      },
-                      '& .MuiChip-label': {
-                        padding: '8px 16px',
-                      },
-                      '& .MuiChip-icon': {
-                        color: isSelected ? 'white' : color,
-                        fontSize: 20,
-                      },
-                    }}
-                    icon={React.cloneElement(icon, { sx: { fontSize: 20 } })}
-                  />
-                </Zoom>
-              );
-            })}
-          </Box>
-          
-          {selectedCategoryId && (
-            <Fade in timeout={500}>
-              <Box sx={{ textAlign: 'center', mt: 3 }}>
-                <Typography
-                  variant="body2"
+              <Zoom in={filtersExpanded} timeout={300}>
+                <Chip
+                  label="All Categories"
+                  onClick={() => handleCategoryChange({ target: { value: '' } })}
+                  variant={selectedCategoryId === '' ? 'filled' : 'outlined'}
                   sx={{
-                    color: 'text.secondary',
-                    fontStyle: 'italic',
-                    opacity: 0.8,
+                    px: isSmallScreen ? 2 : 3,
+                    py: isSmallScreen ? 1.5 : 2,
+                    height: 'auto',
+                    fontSize: isSmallScreen ? '0.85rem' : '1rem',
+                    fontWeight: 600,
+                    borderRadius: '25px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    backgroundColor: selectedCategoryId === '' 
+                      ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+                      : 'transparent',
+                    color: selectedCategoryId === '' ? 'white' : 'text.primary',
+                    border: selectedCategoryId === '' 
+                      ? 'none' 
+                      : `2px solid ${theme.palette.divider}`,
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: selectedCategoryId === '' 
+                        ? `0 8px 25px ${theme.palette.primary.main}44`
+                        : `0 8px 25px ${theme.palette.grey[400]}44`,
+                      backgroundColor: selectedCategoryId === '' 
+                        ? `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`
+                        : theme.palette.action.hover,
+                    },
+                    '& .MuiChip-label': {
+                      padding: isSmallScreen ? '6px 12px' : '8px 16px',
+                    },
                   }}
-                >
-                  Showing {categories.find(c => c.id === selectedCategoryId)?.name} scenarios
-                </Typography>
-              </Box>
-            </Fade>
-          )}
+                  icon={<AutoAwesome sx={{ fontSize: isSmallScreen ? 16 : 20 }} />}
+                />
+              </Zoom>
+              
+              {categories.map((category, index) => {
+                const { icon, color } = getCategoryVisuals(category.name);
+                const isSelected = selectedCategoryId === category.id;
+                
+                return (
+                  <Zoom in={filtersExpanded} timeout={400 + index * 100} key={category.id}>
+                    <Chip
+                      label={category.name}
+                      onClick={() => handleCategoryChange({ target: { value: category.id } })}
+                      variant={isSelected ? 'filled' : 'outlined'}
+                      sx={{
+                        px: isSmallScreen ? 2 : 3,
+                        py: isSmallScreen ? 1.5 : 2,
+                        height: 'auto',
+                        fontSize: isSmallScreen ? '0.85rem' : '1rem',
+                        fontWeight: 600,
+                        borderRadius: '25px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        backgroundColor: isSelected ? color : 'transparent',
+                        color: isSelected ? 'white' : 'text.primary',
+                        border: isSelected ? 'none' : `2px solid ${color}44`,
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: `0 8px 25px ${color}44`,
+                          backgroundColor: isSelected ? color : `${color}11`,
+                          borderColor: isSelected ? 'transparent' : color,
+                        },
+                        '& .MuiChip-label': {
+                          padding: isSmallScreen ? '6px 12px' : '8px 16px',
+                        },
+                        '& .MuiChip-icon': {
+                          color: isSelected ? 'white' : color,
+                          fontSize: isSmallScreen ? 16 : 20,
+                        },
+                      }}
+                      icon={React.cloneElement(icon, { sx: { fontSize: isSmallScreen ? 16 : 20 } })}
+                    />
+                  </Zoom>
+                );
+              })}
+            </Box>
+            
+            {selectedCategoryId && (
+              <Fade in timeout={500}>
+                <Box sx={{ textAlign: 'center', mt: isSmallScreen ? 2 : 3 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      fontStyle: 'italic',
+                      opacity: 0.8,
+                      fontSize: isSmallScreen ? '0.8rem' : '0.875rem',
+                    }}
+                  >
+                    Showing {categories.find(c => c.id === selectedCategoryId)?.name} scenarios
+                  </Typography>
+                </Box>
+              </Fade>
+            )}
+          </Collapse>
         </Box>
 
         {isLoading ? (
