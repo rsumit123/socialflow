@@ -13,6 +13,7 @@ import {
   Paper,
   Chip,
   CircularProgress,
+  Badge,
 } from '@mui/material';
 import { 
   ArrowBack,
@@ -24,6 +25,8 @@ import {
   SentimentVerySatisfied,
   FavoriteBorder,
   Groups,
+  CheckCircle,
+  Star,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -53,6 +56,22 @@ const AllLessons = () => {
     queryFn: fetchUnlockedLessons,
     enabled: !!user.token,
   });
+
+  // Helper function to check lesson completion and get best score
+  const getLessonStatus = (lesson) => {
+    const previousProgress = lesson.previous_progress || [];
+    const thresholdScore = lesson.threshold_score || 0;
+    
+    if (previousProgress.length === 0) {
+      return { isCompleted: false, bestScore: null };
+    }
+    
+    const scores = previousProgress.map(attempt => attempt.score || 0);
+    const bestScore = Math.max(...scores);
+    const isCompleted = bestScore >= thresholdScore;
+    
+    return { isCompleted, bestScore };
+  };
 
   const getCategoryVisuals = (categoryName = '') => {
     const lowerName = categoryName.toLowerCase();
@@ -178,6 +197,7 @@ const AllLessons = () => {
             {lessons.map((lesson) => {
               const categoryName = lesson.subcategory?.category?.name || '';
               const { icon, color, gradient } = getCategoryVisuals(categoryName);
+              const { isCompleted, bestScore } = getLessonStatus(lesson);
               
               return (
               <Grid item xs={12} sm={6} md={4} key={lesson.id}>
@@ -194,9 +214,38 @@ const AllLessons = () => {
                     overflow: 'hidden',
                     background: gradient,
                     border: `1px solid ${color}44`,
+                    position: 'relative',
                   }}
                   onClick={() => handleLessonClick(lesson.id)}
                 >
+                  {/* Completion Badge */}
+                  {isCompleted && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 12,
+                        right: 12,
+                        zIndex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        backgroundColor: theme.palette.success.main,
+                        color: 'white',
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: '20px',
+                        boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <CheckCircle sx={{ fontSize: 16 }} />
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: 'inherit' }}>
+                        Best: {bestScore}
+                      </Typography>
+                    </Box>
+                  )}
+
                   <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}>
                     <Chip 
                       label={lesson.subcategory_name} 
@@ -219,10 +268,30 @@ const AllLessons = () => {
                         alignItems: 'center',
                         color: color,
                         background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
-                        boxShadow: theme.shadows[3]
+                        boxShadow: theme.shadows[3],
+                        position: 'relative',
                       }}
                     >
                       {icon}
+                      {isCompleted && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            bottom: -4,
+                            right: -4,
+                            backgroundColor: theme.palette.success.main,
+                            borderRadius: '50%',
+                            width: 24,
+                            height: 24,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          }}
+                        >
+                          <Star sx={{ fontSize: 14, color: 'white' }} />
+                        </Box>
+                      )}
                     </Box>
                     <Typography
                       variant="h6"
@@ -251,15 +320,20 @@ const AllLessons = () => {
                         px: 2,
                         py: 1,
                         borderRadius: '20px',
-                        background: theme.palette.action.hover,
+                        background: isCompleted 
+                          ? `linear-gradient(45deg, ${theme.palette.success.light}, ${theme.palette.success.main})`
+                          : theme.palette.action.hover,
+                        color: isCompleted ? 'white' : 'inherit',
                         transition: 'all 0.3s ease',
                         '&:hover': {
-                          background: theme.palette.action.selected
+                          background: isCompleted 
+                            ? `linear-gradient(45deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`
+                            : theme.palette.action.selected
                         }
                       }}
                     >
                       <Typography variant="button" sx={{ fontWeight: 500 }}>
-                        Start Lesson
+                        {isCompleted ? 'Replay Lesson' : 'Start Lesson'}
                       </Typography>
                     </Box>
                   </CardContent>

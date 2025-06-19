@@ -97,6 +97,17 @@ const LessonDetail = () => {
     }
   }, [lesson]);
   
+  // Reset component state when lesson changes
+  useEffect(() => {
+    setUserResponse('');
+    setChallengeActive(false);
+    setShowModal(true);
+    setShowResultModal(false);
+    setResult(null);
+    setModalStep(1);
+    clearInterval(timerRef.current);
+  }, [lessonId]);
+  
   useEffect(() => {
     return () => clearInterval(timerRef.current);
   }, []);
