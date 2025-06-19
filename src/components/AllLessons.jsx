@@ -49,6 +49,10 @@ const AllLessons = () => {
   const [page, setPage] = React.useState(1);
   const [selectedCategoryId, setSelectedCategoryId] = React.useState('');
 
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const fetchUnlockedLessons = async (page, categoryId) => {
     const limit = 10;
     const offset = (page - 1) * limit;
