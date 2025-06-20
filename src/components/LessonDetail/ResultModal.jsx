@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Button, Paper, Fade, Chip } from '@mui/material';
-import { CheckCircle, Warning, RestartAlt, ArrowForward } from '@mui/icons-material';
+import { CheckCircle, Warning, RestartAlt, ArrowForward, GridView } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 const ResultModal = React.forwardRef((props, ref) => {
@@ -25,6 +25,13 @@ const ResultModal = React.forwardRef((props, ref) => {
       onClose();
     }
     retryChallenge();
+  };
+
+  const handleAllScenarios = () => {
+    if (onClose) {
+      onClose();
+    }
+    navigate('/all-scenarios');
   };
 
   if (!result) return null;
@@ -143,6 +150,7 @@ const ResultModal = React.forwardRef((props, ref) => {
             justifyContent: 'center', 
             gap: 2,
             flexDirection: isSmallScreen ? 'column' : 'row',
+            flexWrap: 'wrap',
           }}
         >
           <Button
@@ -163,6 +171,28 @@ const ResultModal = React.forwardRef((props, ref) => {
             }}
           >
             Try Again
+          </Button>
+
+          <Button
+            variant="outlined"
+            onClick={handleAllScenarios}
+            startIcon={<GridView />}
+            sx={{
+              borderRadius: '12px',
+              px: 3,
+              py: 1.5,
+              fontWeight: 600,
+              borderWidth: '2px',
+              borderColor: theme.palette.secondary.main,
+              color: theme.palette.secondary.main,
+              '&:hover': {
+                borderWidth: '2px',
+                backgroundColor: 'rgba(156, 39, 176, 0.08)',
+                borderColor: theme.palette.secondary.main,
+              }
+            }}
+          >
+            All Scenarios
           </Button>
           
           {isSuccess && (

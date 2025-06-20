@@ -715,12 +715,12 @@ const PlatformPage = () => {
     {
       title: 'Dynamic Dialogues',
       icon: <Chat sx={{ fontSize: 40 }} />,
-      description: 'Step into realistic chats with AI personas. Learn to navigate different communication styles and keep the conversation going.',
+      description: 'Practice conversations with AI personas and improve your communication skills.',
       path: '/bots',
       locked: false,
     },
     {
-      title: 'Reports',
+      title: 'Progress Tracker',
       icon: <Assessment sx={{ fontSize: 40 }} />,
       description: 'Review your performance and track your progress',
       path: '/report-cards',
@@ -770,19 +770,35 @@ const PlatformPage = () => {
           }}
         >
           <Container maxWidth="lg">
-            <Typography
-              variant={isSmallScreen ? 'h4' : 'h3'}
-              sx={{
-                fontWeight: 'bold',
-                textAlign: 'center',
-                mb: 4,
-                background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Welcome to SocialFlow!
-            </Typography>
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Typography
+                variant={isSmallScreen ? 'h4' : 'h3'}
+                sx={{
+                  fontWeight: 'bold',
+                  mb: 2,
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {user?.first_name 
+                  ? `Ready to practice, ${user.first_name}?` 
+                  : 'What would you like to practice today?'
+                }
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: 'text.secondary',
+                  fontWeight: 400,
+                  maxWidth: '600px',
+                  mx: 'auto',
+                  lineHeight: 1.5,
+                }}
+              >
+                Choose your learning path and start building your communication skills
+              </Typography>
+            </Box>
 
             <Grid container spacing={4} justifyContent="center">
               {modules.map((module, index) => {

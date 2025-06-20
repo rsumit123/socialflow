@@ -49,7 +49,7 @@ const Header = (props) => {
     ? [
         { name: 'Platform', path: '/platform' },
         { name: 'Evaluate', path: '/bots' },
-        { name: 'Report Cards', path: '/report-cards' },
+        { name: 'Progress Tracker', path: '/report-cards' },
         { name: 'About', path: '/about' },
       ]
     : [

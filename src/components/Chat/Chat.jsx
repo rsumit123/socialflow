@@ -179,7 +179,7 @@ const Chat = () => {
       setReportLink(report_link || '');
       setReportGenerated(true); // Mark report as generated
       
-      // If the user explicitly ended the chat, navigate to Report Cards
+      // If the user explicitly ended the chat, navigate to Progress Tracker
       // Otherwise show the evaluation modal, allowing them to continue chatting
       if (shouldEndChat) {
         navigate('/report-cards');

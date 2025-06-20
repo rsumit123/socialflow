@@ -477,6 +477,35 @@ const AllLessons = () => {
                       </Box>
                     )}
 
+                    {/* Target Score Badge for Incomplete Lessons */}
+                    {!isCompleted && lesson.threshold_score && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 12,
+                          right: 12,
+                          zIndex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                          backgroundColor: `${color}E6`,
+                          color: 'white',
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: '20px',
+                          boxShadow: `0 2px 8px ${color}44`,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          border: `1px solid ${color}`,
+                        }}
+                      >
+                        <Star sx={{ fontSize: 16 }} />
+                        <Typography variant="caption" sx={{ fontWeight: 600, color: 'inherit' }}>
+                          Target: {lesson.threshold_score}
+                        </Typography>
+                      </Box>
+                    )}
+
                     <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}>
                       <Chip 
                         label={lesson.subcategory_name} 
