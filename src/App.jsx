@@ -21,6 +21,8 @@ import TermsOfService from './components/TOS';
 import LessonDetail from './components/LessonDetail/LessonDetail';
 import BotSelection from './components/BotSelection';
 import AllLessons from './components/AllLessons';
+import GoalBasedObjectives from './components/GoalBasedObjectives';
+import GoalScenarioChat from './components/GoalScenarioChat';
 import { Box, CircularProgress } from '@mui/material';
 
 // Protected Route Component
@@ -194,6 +196,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AllLessons />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/goal-objectives"
+              element={
+                <ProtectedRoute>
+                  <GoalBasedObjectives />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/goal-objectives/scenario/:scenarioId"
+              element={
+                <ProtectedRoute>
+                  <GoalScenarioChat />
                 </ProtectedRoute>
               }
             />

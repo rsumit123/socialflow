@@ -713,6 +713,14 @@ const PlatformPage = () => {
 
   const modules = [
     {
+      title: 'Goal Based Objectives',
+      icon: <LocalFireDepartment sx={{ fontSize: 40 }} />,
+      description: 'Complete interactive conversation challenges with specific goals.',
+      path: '/goal-objectives',
+      locked: false,
+      isNew: true,
+    },
+    {
       title: 'Dynamic Dialogues',
       icon: <Chat sx={{ fontSize: 40 }} />,
       description: 'Practice conversations with AI personas and improve your communication skills.',
@@ -854,6 +862,28 @@ const PlatformPage = () => {
                             color: 'white',
                             fontWeight: 600,
                             boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                          }}
+                        />
+                      )}
+                      {module.isNew && (
+                        <Chip
+                          label="NEW"
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 16,
+                            right: 16,
+                            zIndex: 2,
+                            background: `linear-gradient(45deg, #FF6B6B, #FF8E53)`,
+                            color: 'white',
+                            fontWeight: 700,
+                            boxShadow: '0 4px 12px rgba(255, 107, 107, 0.4)',
+                            animation: 'pulse-new 2s infinite',
+                            '@keyframes pulse-new': {
+                              '0%': { transform: 'scale(1)' },
+                              '50%': { transform: 'scale(1.05)' },
+                              '100%': { transform: 'scale(1)' },
+                            }
                           }}
                         />
                       )}
