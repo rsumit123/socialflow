@@ -109,7 +109,7 @@ const GoalBasedObjectives = () => {
       return { status: 'Not Started', goal_achieved: false };
     }
     return {
-      status: scenario.user_progress.status_display || 'Not Started',
+      status: scenario.user_progress.get_status_display || 'Not Started',
       goal_achieved: scenario.user_progress.goal_achieved || false
     };
   };
@@ -125,14 +125,15 @@ const GoalBasedObjectives = () => {
   };
 
   const renderPathSelection = () => (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ textAlign: 'center', mb: 6 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 2, sm: 3 } }}>
+      <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 } }}>
         <Typography
           variant="h3"
           component="h1"
           sx={{
             fontWeight: 800,
             mb: 2,
+            fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
             background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
@@ -140,7 +141,16 @@ const GoalBasedObjectives = () => {
         >
           🎯 Goal Based Objectives
         </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+        <Typography 
+          variant="h6" 
+          color="text.secondary" 
+          sx={{ 
+            maxWidth: 600, 
+            mx: 'auto',
+            fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+            px: { xs: 2, sm: 0 }
+          }}
+        >
           Master conversation skills through interactive challenges with specific goals
         </Typography>
       </Box>
@@ -150,7 +160,7 @@ const GoalBasedObjectives = () => {
           <CircularProgress size={60} />
         </Box>
       ) : (
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
           {learningPaths.map((path) => {
             const progress = calculatePathProgress(path.scenarios);
             const pathColor = getPathColor(path.name);
@@ -175,20 +185,27 @@ const GoalBasedObjectives = () => {
                     }}
                     onClick={() => setSelectedPath(path)}
                   >
-                    <CardContent sx={{ p: 4 }}>
+                    <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <Avatar
                           sx={{
                             bgcolor: pathColor,
-                            width: 60,
-                            height: 60,
+                            width: { xs: 50, sm: 60 },
+                            height: { xs: 50, sm: 60 },
                             mr: 2,
                           }}
                         >
                           {getPathIcon(path.name)}
                         </Avatar>
                         <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                          <Typography 
+                            variant="h5" 
+                            sx={{ 
+                              fontWeight: 700, 
+                              mb: 1,
+                              fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' }
+                            }}
+                          >
                             {path.name}
                           </Typography>
                           <Chip
@@ -198,6 +215,7 @@ const GoalBasedObjectives = () => {
                               backgroundColor: `${pathColor}20`,
                               color: pathColor,
                               fontWeight: 600,
+                              fontSize: { xs: '0.7rem', sm: '0.75rem' }
                             }}
                           />
                         </Box>
@@ -206,17 +224,32 @@ const GoalBasedObjectives = () => {
                       <Typography
                         variant="body1"
                         color="text.secondary"
-                        sx={{ mb: 3, lineHeight: 1.6 }}
+                        sx={{ 
+                          mb: 3, 
+                          lineHeight: 1.6,
+                          fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }}
                       >
                         {path.description}
                       </Typography>
 
                       <Box sx={{ mb: 2 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography 
+                            variant="body2" 
+                            color="text.secondary"
+                            sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                          >
                             Progress
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: pathColor }}>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              fontWeight: 600, 
+                              color: pathColor,
+                              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                            }}
+                          >
                             {progress.completed}/{progress.total} Completed
                           </Typography>
                         </Box>
@@ -242,9 +275,10 @@ const GoalBasedObjectives = () => {
                         sx={{
                           backgroundColor: pathColor,
                           borderRadius: '12px',
-                          py: 1.5,
+                          py: { xs: 1.25, sm: 1.5 },
                           fontWeight: 600,
                           textTransform: 'none',
+                          fontSize: { xs: '0.875rem', sm: '1rem' },
                           '&:hover': {
                             backgroundColor: `${pathColor}dd`,
                           }
@@ -282,8 +316,8 @@ const GoalBasedObjectives = () => {
     const pathColor = getPathColor(selectedPath.name);
     
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 2, sm: 3 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 3, sm: 4 } }}>
           <IconButton
             onClick={() => setSelectedPath(null)}
             sx={{
@@ -299,16 +333,27 @@ const GoalBasedObjectives = () => {
             <ArrowBack />
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+            <Typography 
+              variant="h4" 
+              sx={{ 
+                fontWeight: 700, 
+                mb: 1,
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' }
+              }}
+            >
               {selectedPath.name}
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography 
+              variant="body1" 
+              color="text.secondary"
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+            >
               {selectedPath.description}
             </Typography>
           </Box>
         </Box>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
           {selectedPath.scenarios.map((scenario, index) => {
             const scenarioStatus = getScenarioStatus(scenario);
             const statusColor = getStatusColor(scenarioStatus.status);
@@ -384,9 +429,16 @@ const GoalBasedObjectives = () => {
                     </Box>
                   )}
 
-                  <CardContent sx={{ p: 3 }}>
+                  <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, flexGrow: 1 }}>
+                      <Typography 
+                        variant="h6" 
+                        sx={{ 
+                          fontWeight: 600, 
+                          flexGrow: 1,
+                          fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' }
+                        }}
+                      >
                         {scenario.title}
                       </Typography>
                       <Chip
@@ -396,6 +448,7 @@ const GoalBasedObjectives = () => {
                           backgroundColor: `${pathColor}20`,
                           color: pathColor,
                           fontWeight: 600,
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' }
                         }}
                       />
                     </Box>
@@ -403,7 +456,11 @@ const GoalBasedObjectives = () => {
                     <Typography
                       variant="body2"
                       color="text.secondary"
-                      sx={{ mb: 2, lineHeight: 1.5 }}
+                      sx={{ 
+                        mb: 2, 
+                        lineHeight: 1.5,
+                        fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                      }}
                     >
                       {scenario.context_description || `Practice your conversation skills in this ${scenario.title.toLowerCase()} scenario.`}
                     </Typography>
@@ -411,22 +468,37 @@ const GoalBasedObjectives = () => {
                     <Paper
                       elevation={0}
                       sx={{
-                        p: 2,
+                        p: { xs: 1.5, sm: 2 },
                         mb: 2,
                         backgroundColor: `${pathColor}10`,
                         borderRadius: '12px',
                         border: `1px solid ${pathColor}30`,
                       }}
                     >
-                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: pathColor }}>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          fontWeight: 600, 
+                          mb: 1, 
+                          color: pathColor,
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                        }}
+                      >
                         🎯 Your Goal:
                       </Typography>
-                      <Typography variant="body2" color="text.primary">
+                      <Typography 
+                        variant="body2" 
+                        color="text.primary"
+                        sx={{ 
+                          fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                          lineHeight: { xs: 1.4, sm: 1.5 }
+                        }}
+                      >
                         {scenario.user_goal || `Complete the ${scenario.title.toLowerCase()} conversation challenge successfully.`}
                       </Typography>
                     </Paper>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 1 }}>
                       <Chip
                         label={scenarioStatus.status}
                         size="small"
@@ -434,6 +506,7 @@ const GoalBasedObjectives = () => {
                           backgroundColor: statusColor,
                           color: 'white',
                           fontWeight: 600,
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' }
                         }}
                       />
                       {!scenario.is_locked && (
@@ -446,6 +519,9 @@ const GoalBasedObjectives = () => {
                             borderRadius: '8px',
                             textTransform: 'none',
                             fontWeight: 600,
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            minWidth: { xs: 'auto', sm: 'auto' },
+                            px: { xs: 1.5, sm: 2 },
                             '&:hover': {
                               backgroundColor: `${pathColor}dd`,
                             }

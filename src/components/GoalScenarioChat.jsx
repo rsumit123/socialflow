@@ -73,6 +73,9 @@ const GoalScenarioChat = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
+  const [feedback, setFeedback] = useState('');
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackScore, setFeedbackScore] = useState(null);
 
   // Fetch scenario details
   useEffect(() => {
@@ -105,10 +108,8 @@ const GoalScenarioChat = () => {
         
         setScenario(foundScenario);
         
-        // Check if already completed
-        if (foundScenario.user_progress && foundScenario.user_progress.goal_achieved) {
-          setGoalAchieved(true);
-        }
+        // Don't set goalAchieved to true initially, even if previously completed
+        // This allows users to replay scenarios with a fresh goal display
         
         // Add initial context message with enhanced styling
         setMessages([
@@ -317,6 +318,22 @@ const GoalScenarioChat = () => {
           </Box>
         </Zoom>
         
+        {feedbackScore && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+            <Chip
+              label={`Final Score: ${feedbackScore}/100`}
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: isMobile ? '0.9rem' : '1rem',
+                px: 2,
+                py: 1,
+              }}
+            />
+          </Box>
+        )}
+        
         <Card sx={{ 
           bgcolor: 'rgba(255,255,255,0.15)', 
           color: 'white', 
@@ -500,6 +517,18 @@ const GoalScenarioChat = () => {
           timestamp: Date.now()
         }]);
 
+        // Display feedback if provided
+        if (data.feedback) {
+          setFeedback(data.feedback);
+          setFeedbackScore(data.score);
+          setShowFeedback(true);
+          
+          // Auto-hide feedback after 6 seconds (longer duration)
+          setTimeout(() => {
+            setShowFeedback(false);
+          }, 6000);
+        }
+
         // Check if goal is achieved
         if (data.goal_achieved && !goalAchieved) {
           setGoalAchieved(true);
@@ -552,7 +581,120 @@ const GoalScenarioChat = () => {
     setGoalAchieved(false);
     setMessageCount(0);
     setShowSuccessModal(false);
+    setShowFeedback(false);
+    setFeedback('');
+    setFeedbackScore(null);
   };
+
+  // Render feedback toast - drops from top
+  const renderFeedbackToast = () => (
+    <Fade in={showFeedback} timeout={400}>
+      <Paper
+        elevation={12}
+        sx={{
+          position: 'fixed',
+          top: { xs: 16, md: 20 },
+          left: '50%',
+          transform: showFeedback ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(-100%)',
+          width: { xs: 'calc(100vw - 32px)', sm: '400px', md: '450px' },
+          maxWidth: '90vw',
+          zIndex: 1400,
+          borderRadius: '20px',
+          overflow: 'hidden',
+          background: feedbackScore 
+            ? `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`
+            : `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
+          color: 'white',
+          backdropFilter: 'blur(15px)',
+          border: '1px solid rgba(255,255,255,0.3)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        <Box sx={{ p: { xs: 2.5, sm: 3 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+            <Avatar 
+              sx={{ 
+                bgcolor: 'rgba(255,255,255,0.25)', 
+                width: { xs: 36, sm: 40 }, 
+                height: { xs: 36, sm: 40 },
+                flexShrink: 0
+              }}
+            >
+              {feedbackScore ? <EmojiEvents sx={{ fontSize: { xs: 18, sm: 20 } }} /> : <Lightbulb sx={{ fontSize: { xs: 18, sm: 20 } }} />}
+            </Avatar>
+            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Typography 
+                  variant="subtitle2" 
+                  sx={{ 
+                    fontWeight: 700,
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  }}
+                >
+                  {feedbackScore ? '🎉 Final Score' : '💡 Coach Tip'}
+                </Typography>
+                {feedbackScore && (
+                  <Chip
+                    label={`${feedbackScore}/100`}
+                    size="small"
+                    sx={{
+                      bgcolor: 'rgba(255,255,255,0.3)',
+                      color: 'white',
+                      fontWeight: 600,
+                      fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                    }}
+                  />
+                )}
+              </Box>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  lineHeight: 1.5,
+                  fontSize: { xs: '0.9rem', sm: '0.95rem' }
+                }}
+              >
+                {feedback}
+              </Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={() => setShowFeedback(false)}
+              sx={{ 
+                color: 'rgba(255,255,255,0.8)',
+                '&:hover': { 
+                  color: 'white',
+                  bgcolor: 'rgba(255,255,255,0.1)'
+                },
+                mt: -0.5,
+                mr: -0.5
+              }}
+            >
+              <Box sx={{ fontSize: 20 }}>×</Box>
+            </IconButton>
+          </Box>
+        </Box>
+        
+        {/* Progress bar for auto-hide */}
+        <LinearProgress
+          variant="determinate"
+          value={100}
+          sx={{
+            height: 3,
+            bgcolor: 'rgba(255,255,255,0.2)',
+            '& .MuiLinearProgress-bar': {
+              bgcolor: 'rgba(255,255,255,0.7)',
+              animation: showFeedback ? 'shrink 6s linear' : 'none',
+              '@keyframes shrink': {
+                from: { transform: 'translateX(0%)' },
+                to: { transform: 'translateX(100%)' },
+              },
+            }
+          }}
+        />
+      </Paper>
+    </Fade>
+  );
 
   // Early returns after all hooks are called
   if (isLoading) {
@@ -836,6 +978,23 @@ const GoalScenarioChat = () => {
           <Typography variant="h6" sx={{ mb: 3 }}>
             Congratulations! You completed this scenario in {messageCount} messages.
           </Typography>
+          
+          {feedbackScore && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+              <Chip
+                label={`Final Score: ${feedbackScore}/100`}
+                sx={{
+                  bgcolor: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  px: 2,
+                  py: 1,
+                }}
+              />
+            </Box>
+          )}
+          
           <Card sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: 'white', mb: 3 }}>
             <CardContent>
               <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -868,6 +1027,9 @@ const GoalScenarioChat = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Feedback Toast */}
+      {renderFeedbackToast()}
 
       {/* Error Snackbar */}
       <Snackbar
