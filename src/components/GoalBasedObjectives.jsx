@@ -139,7 +139,7 @@ const GoalBasedObjectives = () => {
             WebkitTextFillColor: 'transparent'
           }}
         >
-          🎯 Goal Based Objectives
+          🎯 Mission Control
         </Typography>
         <Typography 
           variant="h6" 
@@ -151,7 +151,7 @@ const GoalBasedObjectives = () => {
             px: { xs: 2, sm: 0 }
           }}
         >
-          Master conversation skills through interactive challenges with specific goals
+          Master conversation skills through interactive missions with specific objectives
         </Typography>
       </Box>
 

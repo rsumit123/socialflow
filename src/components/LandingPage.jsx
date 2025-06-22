@@ -65,7 +65,7 @@ const LandingPage = () => {
       <Box
         sx={{
           background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
-          minHeight: '100vh',
+          minHeight: { xs: 'auto', md: '100vh' },
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
@@ -137,11 +137,12 @@ const LandingPage = () => {
                   Upgrade your communication game through immersive practice that actually works.
                   Build real confidence, crush social anxiety, and unlock your potential.
                 </Typography>
-                <Stack direction="row" spacing={2} sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: { xs: 2 } }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: { xs: 2 }, width: '100%' }}>
                   <Button
                     variant="contained"
                     color="primary"
                     size="large"
+                    fullWidth={isSmallScreen}
                     onClick={handleGetStarted}
                     endIcon={<ArrowForward />}
                     sx={{
@@ -166,6 +167,7 @@ const LandingPage = () => {
                     variant="outlined"
                     color="primary"
                     size="large"
+                    fullWidth={isSmallScreen}
                     onClick={() => navigate('/about')}
                     sx={{
                       borderRadius: '14px',
@@ -189,11 +191,11 @@ const LandingPage = () => {
                 
                 {/* Value Props instead of stats */}
                 <Stack 
-                  direction="row" 
+                  direction={{ xs: 'column', sm: 'row' }} 
                   spacing={2} 
                   sx={{ 
                     mt: 5, 
-                    flexWrap: 'wrap', 
+                    flexWrap: { xs: 'nowrap', sm: 'wrap' }, 
                     gap: 2,
                     '& > div': {
                       backdropFilter: 'blur(10px)',
@@ -204,7 +206,8 @@ const LandingPage = () => {
                       py: 1.5,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 1.5
+                      gap: 1.5,
+                      width: { xs: '100%', sm: 'auto' },
                     }
                   }}
                 >
@@ -257,9 +260,7 @@ const LandingPage = () => {
                     border: `1px solid ${theme.palette.primary.main}44`,
                     left: isSmallScreen ? '15%' : '20%',
                     top: '15%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                    display: { xs: 'none', sm: 'flex' },
                     animation: 'floatBubble1 5s ease-in-out infinite',
                     '@keyframes floatBubble1': {
                       '0%': { transform: 'translateY(0px)' },
@@ -282,9 +283,7 @@ const LandingPage = () => {
                     border: `1px solid ${theme.palette.secondary.main}44`,
                     right: isSmallScreen ? '20%' : '15%',
                     top: '25%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                    display: { xs: 'none', sm: 'flex' },
                     animation: 'floatBubble2 6s ease-in-out infinite 1s',
                     '@keyframes floatBubble2': {
                       '0%': { transform: 'translateY(0px)' },
@@ -343,6 +342,7 @@ const LandingPage = () => {
                     width: '100%',
                     height: '100%',
                     zIndex: 1,
+                    display: { xs: 'none', sm: 'flex' },
                   }}
                   viewBox="0 0 400 400"
                   xmlns="http://www.w3.org/2000/svg"
@@ -371,7 +371,7 @@ const LandingPage = () => {
                     background: theme.palette.background.paper,
                     border: `1px solid ${theme.palette.secondary.main}44`,
                     boxShadow: `0 15px 30px ${theme.palette.secondary.main}22`,
-                    display: 'flex',
+                    display: { xs: 'none', sm: 'flex' },
                     justifyContent: 'center',
                     alignItems: 'center',
                     flexDirection: 'column',
@@ -556,6 +556,7 @@ const LandingPage = () => {
             variant="contained"
             color="primary"
             size="large"
+            fullWidth={isSmallScreen}
             onClick={handleGetStarted}
             endIcon={<ArrowForward />}
             sx={{
