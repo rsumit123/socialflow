@@ -8,7 +8,6 @@ import {
   Avatar,
   Box,
   LinearProgress,
-  Button,
   Zoom,
 } from '@mui/material';
 import { Assessment } from '@mui/icons-material';
@@ -84,18 +83,24 @@ const DynamicDialogueCard = ({ reportCard, index, onReportClick }) => {
                 {reportCard.feedback || 'No feedback provided yet.'}
               </Typography>
               
-              <Button
-                fullWidth
-                variant="outlined"
+              <Box
                 sx={{
+                  mt: 2,
+                  p: 1.5,
                   borderRadius: '12px',
-                  py: 1,
-                  textTransform: 'none',
+                  border: `1px solid ${theme.palette.primary.main}`,
+                  color: theme.palette.primary.main,
+                  textAlign: 'center',
                   fontWeight: 600,
+                  fontSize: '0.875rem',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    bgcolor: `${theme.palette.primary.main}08`,
+                  }
                 }}
               >
                 View Full Report
-              </Button>
+              </Box>
             </CardContent>
           </CardActionArea>
         </Card>

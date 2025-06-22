@@ -14,6 +14,7 @@ import {
 import { 
   School,
   Psychology,
+  LocalFireDepartment,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PointElement, LineElement } from 'chart.js';
@@ -23,6 +24,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '@mui/material/styles';
 import ScenarioProgressTab from './ReportCards/ScenarioProgressTab';
 import DynamicDialoguesTab from './ReportCards/DynamicDialoguesTab';
+import MissionControlTab from './ReportCards/MissionControlTab';
 
 // Register Chart.js components
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PointElement, LineElement);
@@ -77,6 +79,25 @@ const ReportCards = () => {
     }
   };
 
+  // Fetch Mission Control Progress (Goal-based scenarios)
+  const fetchMissionControlProgress = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/scenarios/paths/`,
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+      if (handleAuthErrors(response, navigate)) throw new Error("Failed to fetch mission control progress");
+      return response.json();
+    } catch (error) {
+      console.error('Error fetching mission control progress:', error);
+      setErrorMessage('Failed to load mission control progress.');
+      setOpenSnackbar(true);
+      throw error;
+    }
+  };
+
   const { data: reportCards = [], isLoading: loadingReports } = useQuery({
     queryKey: ['reportCards', user.token],
     queryFn: fetchReportCards,
@@ -86,6 +107,12 @@ const ReportCards = () => {
   const { data: scenarios = [], isLoading: loadingScenarios } = useQuery({
     queryKey: ['scenarioProgress', user.token],
     queryFn: fetchScenarioProgress,
+    enabled: !!user.token,
+  });
+
+  const { data: missionControlPaths = [], isLoading: loadingMissionControl } = useQuery({
+    queryKey: ['missionControlProgress', user.token],
+    queryFn: fetchMissionControlProgress,
     enabled: !!user.token,
   });
 
@@ -99,6 +126,10 @@ const ReportCards = () => {
 
   const handleLessonClick = (lessonId) => {
     navigate(`/training/lessondetail/${lessonId}`);
+  };
+
+  const handleMissionClick = (scenarioId) => {
+    navigate(`/goal-objectives/scenario/${scenarioId}`);
   };
 
   return (
@@ -118,7 +149,7 @@ const ReportCards = () => {
           Progress Dashboard
         </Typography>
         <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-          Track your learning journey across scenarios and dynamic dialogues
+          Track your learning journey across quick bites, missions, and dynamic dialogues
         </Typography>
       </Box>
 
@@ -141,7 +172,17 @@ const ReportCards = () => {
         >
           <Tab 
             icon={<School sx={{ fontSize: isMobile ? 20 : 24 }} />} 
-            label={isMobile ? "Scenarios" : "Scenario Progress"}
+            label={isMobile ? "Quick Bites" : "Quick Bites"}
+            iconPosition={isMobile ? "top" : "start"}
+            sx={{ 
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? 0.5 : 1,
+            }}
+          />
+          <Tab 
+            icon={<LocalFireDepartment sx={{ fontSize: isMobile ? 20 : 24 }} />} 
+            label={isMobile ? "Missions" : "Mission Control"}
             iconPosition={isMobile ? "top" : "start"}
             sx={{ 
               display: 'flex',
@@ -162,7 +203,7 @@ const ReportCards = () => {
         </Tabs>
       </Box>
 
-      {/* Scenario Progress Tab */}
+      {/* Quick Bites Tab */}
       {tabValue === 0 && (
         <ScenarioProgressTab
           scenarios={scenarios}
@@ -171,8 +212,17 @@ const ReportCards = () => {
         />
       )}
 
-      {/* Dynamic Dialogues Tab */}
+      {/* Mission Control Tab */}
       {tabValue === 1 && (
+        <MissionControlTab
+          missionControlPaths={missionControlPaths}
+          loadingMissionControl={loadingMissionControl}
+          onMissionClick={handleMissionClick}
+        />
+      )}
+
+      {/* Dynamic Dialogues Tab */}
+      {tabValue === 2 && (
         <DynamicDialoguesTab
           reportCards={reportCards}
           loadingReports={loadingReports}
