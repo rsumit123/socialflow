@@ -44,7 +44,7 @@ const LandingPage = () => {
   const features = [
     {
       icon: <Psychology sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
-      title: "Real Convos, Zero Judgment",
+      title: "Real Convos, Zero Judgement",
       description: "Practice authentic interactions in a safe space where mistakes are just learning steps"
     },
     {
