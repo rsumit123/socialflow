@@ -17,6 +17,8 @@ import {
   Send,
   TrendingUp,
   History,
+  Mic,
+  MicOff,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -90,6 +92,9 @@ const LessonDetail = () => {
   const [result, setResult] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const timerRef = useRef(null);
+  const [isListening, setIsListening] = useState(false);
+  const [speechRecognition, setSpeechRecognition] = useState(null);
+  const [speechSupported, setSpeechSupported] = useState(false);
 
   useEffect(() => {
     if (lesson) {
@@ -110,6 +115,49 @@ const LessonDetail = () => {
   
   useEffect(() => {
     return () => clearInterval(timerRef.current);
+  }, []);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+          }
+        }
+        
+        if (transcript) {
+          setUserResponse(prev => prev + (prev ? ' ' : '') + transcript.trim());
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      setSpeechRecognition(recognition);
+      setSpeechSupported(true);
+    } else {
+      setSpeechSupported(false);
+    }
   }, []);
 
   const loading = isLessonLoading || areAttemptsLoading;
@@ -194,6 +242,23 @@ const LessonDetail = () => {
   // Handle closing the result modal
   const handleCloseResultModal = () => {
     setShowResultModal(false);
+  };
+
+  // Voice input handlers
+  const startListening = () => {
+    if (speechRecognition && !isListening) {
+      try {
+        speechRecognition.start();
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+      }
+    }
+  };
+
+  const stopListening = () => {
+    if (speechRecognition && isListening) {
+      speechRecognition.stop();
+    }
   };
 
   if (loading) {
@@ -360,23 +425,68 @@ const LessonDetail = () => {
                 </Typography>
               </Box>
               
-              <TextField
-                fullWidth
-                multiline
-                rows={6}
-                value={userResponse}
-                onChange={(e) => setUserResponse(e.target.value)}
-                placeholder="Type your response here... Be creative and authentic!"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '12px',
-                    transition: 'all 0.3s ease',
-                    '&:hover, &.Mui-focused': {
-                      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
+              <Box sx={{ position: 'relative' }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={6}
+                  value={userResponse}
+                  onChange={(e) => setUserResponse(e.target.value)}
+                  placeholder={isListening ? "Listening... speak now" : "Type your response here or use voice input... Be creative and authentic!"}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      transition: 'all 0.3s ease',
+                      paddingRight: speechSupported ? '60px' : '16px',
+                      '&:hover, &.Mui-focused': {
+                        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
+                      },
+                      ...(isListening && {
+                        borderColor: theme.palette.success.main,
+                        '& fieldset': {
+                          borderColor: theme.palette.success.main,
+                          borderWidth: '2px',
+                        }
+                      })
                     },
-                  },
-                }}
-              />
+                  }}
+                />
+                
+                {/* Voice Input Button */}
+                {speechSupported && (
+                  <Button
+                    variant={isListening ? "contained" : "outlined"}
+                    onClick={isListening ? stopListening : startListening}
+                    disabled={submitting}
+                    sx={{
+                      position: 'absolute',
+                      top: 16,
+                      right: 16,
+                      minWidth: 'auto',
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      color: isListening ? 'white' : theme.palette.primary.main,
+                      bgcolor: isListening ? theme.palette.success.main : 'transparent',
+                      borderColor: isListening ? theme.palette.success.main : theme.palette.primary.main,
+                      '&:hover': {
+                        bgcolor: isListening ? theme.palette.success.dark : theme.palette.primary.light + '20',
+                        borderColor: isListening ? theme.palette.success.dark : theme.palette.primary.main,
+                      },
+                      ...(isListening && {
+                        animation: 'pulse 1.5s infinite',
+                        '@keyframes pulse': {
+                          '0%': { transform: 'scale(1)' },
+                          '50%': { transform: 'scale(1.05)' },
+                          '100%': { transform: 'scale(1)' },
+                        }
+                      })
+                    }}
+                  >
+                    {isListening ? <MicOff sx={{ fontSize: 20 }} /> : <Mic sx={{ fontSize: 20 }} />}
+                  </Button>
+                )}
+              </Box>
             </Box>
 
             <Button

@@ -48,6 +48,8 @@ import {
   Info,
   Close,
   Assessment,
+  Mic,
+  MicOff,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -84,6 +86,9 @@ const GoalScenarioChat = () => {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [showEvaluationConfirm, setShowEvaluationConfirm] = useState(false);
   const [showCoachingIntro, setShowCoachingIntro] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechRecognition, setSpeechRecognition] = useState(null);
+  const [speechSupported, setSpeechSupported] = useState(false);
 
   // Fetch scenario details
   useEffect(() => {
@@ -217,6 +222,53 @@ const GoalScenarioChat = () => {
       return () => clearTimeout(timer);
     }
   }, [scenario, isLoading]);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+          }
+        }
+        
+        if (transcript) {
+          setUserMessage(prev => prev + (prev ? ' ' : '') + transcript.trim());
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        if (event.error === 'not-allowed') {
+          setErrorMessage('Microphone access denied. Please allow microphone access to use voice input.');
+          setOpenSnackbar(true);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      setSpeechRecognition(recognition);
+      setSpeechSupported(true);
+    } else {
+      setSpeechSupported(false);
+    }
+  }, []);
 
   const getMessageBubbleStyle = (sender, type) => {
     switch (sender) {
@@ -664,6 +716,25 @@ const GoalScenarioChat = () => {
     setShowFeedbackDialog(false);
     setIsEvaluating(false);
     setShowEvaluationConfirm(false);
+  };
+
+  // Voice input handlers
+  const startListening = () => {
+    if (speechRecognition && !isListening) {
+      try {
+        speechRecognition.start();
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+        setErrorMessage('Failed to start voice recognition. Please try again.');
+        setOpenSnackbar(true);
+      }
+    }
+  };
+
+  const stopListening = () => {
+    if (speechRecognition && isListening) {
+      speechRecognition.stop();
+    }
   };
 
   // Render feedback toast - drops from top
@@ -1487,7 +1558,7 @@ const GoalScenarioChat = () => {
                 fullWidth
                 multiline
                 maxRows={4}
-                placeholder="Type your message..."
+                placeholder={isListening ? "Listening... speak now" : "Type your message or use voice input..."}
                 value={userMessage}
                 onChange={(e) => setUserMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -1496,9 +1567,48 @@ const GoalScenarioChat = () => {
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: '20px',
+                    ...(isListening && {
+                      borderColor: theme.palette.success.main,
+                      '& fieldset': {
+                        borderColor: theme.palette.success.main,
+                        borderWidth: '2px',
+                      }
+                    })
                   }
                 }}
               />
+              
+              {/* Voice Input Button */}
+              {speechSupported && (
+                <Button
+                  variant={isListening ? "contained" : "outlined"}
+                  onClick={isListening ? stopListening : startListening}
+                  disabled={isTyping}
+                  sx={{
+                    minWidth: 'auto',
+                    p: 1.5,
+                    borderRadius: '50%',
+                    color: isListening ? 'white' : theme.palette.primary.main,
+                    bgcolor: isListening ? theme.palette.success.main : 'transparent',
+                    borderColor: isListening ? theme.palette.success.main : theme.palette.primary.main,
+                    '&:hover': {
+                      bgcolor: isListening ? theme.palette.success.dark : theme.palette.primary.light + '20',
+                      borderColor: isListening ? theme.palette.success.dark : theme.palette.primary.main,
+                    },
+                    ...(isListening && {
+                      animation: 'pulse 1.5s infinite',
+                      '@keyframes pulse': {
+                        '0%': { transform: 'scale(1)' },
+                        '50%': { transform: 'scale(1.05)' },
+                        '100%': { transform: 'scale(1)' },
+                      }
+                    })
+                  }}
+                >
+                  {isListening ? <MicOff /> : <Mic />}
+                </Button>
+              )}
+              
               <Button
                 variant="contained"
                 onClick={handleSendMessage}
