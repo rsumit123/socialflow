@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -9,6 +9,8 @@ import {
   Fade,
   IconButton,
   Tooltip,
+  Popper,
+  ClickAwayListener,
 } from '@mui/material';
 import {
   Psychology,
@@ -24,6 +26,15 @@ const ChatMessages = ({
   onShowMessageFeedback,
 }) => {
   const theme = useTheme();
+  const [hasClickedInfoIcon, setHasClickedInfoIcon] = useState(false);
+
+  // Check if we should show the highlight (user hasn't clicked any info icon yet)
+  const shouldShowHighlight = !hasClickedInfoIcon;
+
+  // Find the last user message with feedback for highlighting
+  const lastUserMessageIndex = messages.reduce((lastIndex, msg, index) => {
+    return (msg.sender === 'user' && msg.feedback) ? index : lastIndex;
+  }, -1);
 
   const getMessageBubbleStyle = (sender, type) => {
     switch (sender) {
@@ -110,29 +121,35 @@ const ChatMessages = ({
           <Paper
             elevation={2}
             sx={{
-              p: 2,
+              p: 1.5,
               borderRadius: '20px 20px 20px 4px',
               bgcolor: theme.palette.background.paper,
               border: `1px solid ${theme.palette.divider}`,
+              minWidth: '60px',
+              display: 'flex',
+              justifyContent: 'center',
             }}
           >
             <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-              <Typography variant="body2" sx={{ mr: 1, color: 'text.secondary' }}>
-                AI is thinking
-              </Typography>
               {[0, 1, 2].map((i) => (
                 <Box
                   key={i}
                   sx={{
                     width: 8,
                     height: 8,
-                    bgcolor: theme.palette.primary.main,
+                    bgcolor: theme.palette.secondary.main,
                     borderRadius: '50%',
-                    animation: 'bounce 1.4s infinite ease-in-out both',
-                    animationDelay: `${i * 0.2}s`,
-                    '@keyframes bounce': {
-                      '0%, 80%, 100%': { transform: 'scale(0)' },
-                      '40%': { transform: 'scale(1)' },
+                    animation: 'typing 1.4s infinite ease-in-out both',
+                    animationDelay: `${i * 0.16}s`,
+                    '@keyframes typing': {
+                      '0%, 80%, 100%': { 
+                        transform: 'scale(0)',
+                        opacity: 0.5,
+                      },
+                      '40%': { 
+                        transform: 'scale(1)',
+                        opacity: 1,
+                      },
                     },
                   }}
                 />
@@ -147,77 +164,106 @@ const ChatMessages = ({
   return (
     <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
       <List>
-        {messages.map((msg, index) => (
-          <ListItem
-            key={index}
-            sx={{
-              display: 'flex',
-              justifyContent: msg.sender === 'user' ? 'flex-end' : 
-                            msg.sender === 'system' ? 'center' : 'flex-start',
-              mb: 2,
-              p: 0,
-            }}
-          >
-            <Fade in timeout={300}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, maxWidth: '80%' }}>
-                {msg.sender === 'ai' && (
-                  <Avatar sx={{ bgcolor: theme.palette.secondary.main }}>
-                    <Psychology />
-                  </Avatar>
-                )}
-                <Box sx={{ position: 'relative', maxWidth: '100%' }}>
-                  <Paper
-                    elevation={1}
-                    sx={{
-                      p: 2,
-                      borderRadius: msg.sender === 'user' ? '20px 20px 4px 20px' : 
-                                   msg.sender === 'system' ? '12px' : '20px 20px 20px 4px',
-                      bgcolor: msg.sender === 'user' ? theme.palette.primary.main :
-                              msg.sender === 'system' ? theme.palette.info.light :
-                              theme.palette.grey[100],
-                      color: msg.sender === 'user' || msg.sender === 'system' ? 'white' : 'text.primary',
-                      maxWidth: '100%',
-                      pr: msg.sender === 'user' && msg.feedback ? 5 : 2,
-                    }}
-                  >
-                    <Typography variant="body1">
-                      {msg.message}
-                    </Typography>
-                  </Paper>
-                  {/* Info icon for user messages with feedback */}
-                  {msg.sender === 'user' && msg.feedback && (
-                    <Tooltip title="View detailed feedback">
-                      <IconButton
-                        size="small"
-                        onClick={() => onShowMessageFeedback(msg.feedback)}
-                        sx={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          color: 'rgba(255,255,255,0.8)',
-                          bgcolor: 'rgba(255,255,255,0.1)',
-                          width: 24,
-                          height: 24,
-                          '&:hover': {
-                            color: 'white',
-                            bgcolor: 'rgba(255,255,255,0.2)',
-                          },
-                        }}
+        {messages.map((msg, index) => {
+          const isLastUserMessage = index === lastUserMessageIndex;
+          const shouldHighlightThisIcon = isLastUserMessage && shouldShowHighlight;
+          
+          return (
+            <ListItem
+              key={index}
+              sx={{
+                display: 'flex',
+                justifyContent: msg.sender === 'user' ? 'flex-end' : 
+                              msg.sender === 'system' ? 'center' : 'flex-start',
+                mb: 2,
+                p: 0,
+              }}
+            >
+              <Fade in timeout={300}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, maxWidth: '80%' }}>
+                  {msg.sender === 'ai' && (
+                    <Avatar sx={{ bgcolor: theme.palette.secondary.main }}>
+                      <Psychology />
+                    </Avatar>
+                  )}
+                  <Box sx={{ position: 'relative', maxWidth: '100%' }}>
+                    <Paper
+                      elevation={1}
+                      sx={{
+                        p: 2,
+                        borderRadius: msg.sender === 'user' ? '20px 20px 4px 20px' : 
+                                     msg.sender === 'system' ? '12px' : '20px 20px 20px 4px',
+                        bgcolor: msg.sender === 'user' ? theme.palette.primary.main :
+                                msg.sender === 'system' ? theme.palette.info.light :
+                                theme.palette.grey[100],
+                        color: msg.sender === 'user' || msg.sender === 'system' ? 'white' : 'text.primary',
+                        maxWidth: '100%',
+                        pr: msg.sender === 'user' && msg.feedback ? 5 : 2,
+                      }}
+                    >
+                      <Typography variant="body1">
+                        {msg.message}
+                      </Typography>
+                    </Paper>
+                    {/* Info icon for user messages with feedback */}
+                    {msg.sender === 'user' && msg.feedback && (
+                      <Tooltip 
+                        title={shouldHighlightThisIcon ? "💡 Click for detailed AI feedback!" : "View detailed feedback"}
+                        placement="left"
+                        arrow
                       >
-                        <Info sx={{ fontSize: 16 }} />
-                      </IconButton>
-                    </Tooltip>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            onShowMessageFeedback(msg.feedback);
+                            setHasClickedInfoIcon(true);
+                          }}
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            color: shouldHighlightThisIcon ? '#fff' : 'rgba(255,255,255,0.8)',
+                            bgcolor: shouldHighlightThisIcon ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
+                            width: 24,
+                            height: 24,
+                            boxShadow: shouldHighlightThisIcon ? '0 0 15px rgba(255,255,255,0.4)' : 'none',
+                            animation: shouldHighlightThisIcon ? 'gentlePulse 3s infinite' : 'none',
+                            '@keyframes gentlePulse': {
+                              '0%': {
+                                transform: 'scale(1)',
+                                boxShadow: '0 0 15px rgba(255,255,255,0.4)',
+                              },
+                              '50%': {
+                                transform: 'scale(1.05)',
+                                boxShadow: '0 0 20px rgba(255,255,255,0.6)',
+                              },
+                              '100%': {
+                                transform: 'scale(1)',
+                                boxShadow: '0 0 15px rgba(255,255,255,0.4)',
+                              },
+                            },
+                            '&:hover': {
+                              color: 'white',
+                              bgcolor: 'rgba(255,255,255,0.2)',
+                              transform: 'scale(1.05)',
+                            },
+                          }}
+                        >
+                          <Info sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                  {msg.sender === 'user' && (
+                    <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                      <SentimentSatisfied />
+                    </Avatar>
                   )}
                 </Box>
-                {msg.sender === 'user' && (
-                  <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-                    <SentimentSatisfied />
-                  </Avatar>
-                )}
-              </Box>
-            </Fade>
-          </ListItem>
-        ))}
+              </Fade>
+            </ListItem>
+          );
+        })}
         
         {isTyping && renderTypingIndicator()}
       </List>

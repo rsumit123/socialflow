@@ -569,17 +569,18 @@ const ChatDialogs = ({
           🎯 AI Coach is Here to Help!
         </Typography>
         
+        {/* Real-time Tips Section */}
         <Box sx={{ 
           display: 'flex', 
           gap: 2, 
           mb: 2,
           p: 2.5,
           borderRadius: '12px',
-          bgcolor: theme.palette.info.light + '15',
-          border: `1px solid ${theme.palette.info.light}`,
+          bgcolor: theme.palette.success.light + '15',
+          border: `1px solid ${theme.palette.success.light}`,
         }}>
           <Avatar sx={{ 
-            bgcolor: theme.palette.info.main, 
+            bgcolor: theme.palette.success.main, 
             width: 48, 
             height: 48,
             flexShrink: 0
@@ -590,35 +591,132 @@ const ChatDialogs = ({
             <Typography variant="body1" sx={{ 
               color: theme.palette.text.primary,
               lineHeight: 1.5,
-              mb: 2
+              mb: 1.5,
+              fontWeight: 600
             }}>
-              Get <strong>instant coaching tips</strong> after each message to improve your conversation skills.
+              💡 Instant Coaching Tips
+            </Typography>
+            <Typography variant="body2" sx={{ 
+              color: theme.palette.text.secondary,
+              lineHeight: 1.5,
+            }}>
+              Get real-time feedback after each message to improve your conversation skills.
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Info Icon Feature Section */}
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2, 
+          mb: 2,
+          p: 2.5,
+          borderRadius: '12px',
+          bgcolor: theme.palette.primary.light + '15',
+          border: `2px solid ${theme.palette.primary.light}`,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '3px',
+            background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          }
+        }}>
+          <Avatar sx={{ 
+            bgcolor: theme.palette.primary.main, 
+            width: 48, 
+            height: 48,
+            flexShrink: 0,
+            animation: 'gentleGlow 2s infinite alternate',
+            '@keyframes gentleGlow': {
+              '0%': { boxShadow: `0 0 10px ${theme.palette.primary.main}30` },
+              '100%': { boxShadow: `0 0 20px ${theme.palette.primary.main}60` },
+            }
+          }}>
+            <Info sx={{ color: 'white' }} />
+          </Avatar>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="body1" sx={{ 
+              color: theme.palette.text.primary,
+              lineHeight: 1.5,
+              mb: 1.5,
+              fontWeight: 600
+            }}>
+              🔍 Detailed Message Feedback
             </Typography>
             <Typography variant="body2" sx={{ 
               color: theme.palette.text.secondary,
               lineHeight: 1.5,
               mb: 2
             }}>
-              Click the <Box component="span" sx={{ 
+              Look for the glowing <Box component="span" sx={{ 
                 display: 'inline-flex', 
                 alignItems: 'center', 
                 gap: 0.5,
                 bgcolor: theme.palette.primary.main,
                 color: 'white',
-                px: 1,
-                py: 0.25,
-                borderRadius: '8px',
+                px: 1.5,
+                py: 0.5,
+                borderRadius: '12px',
                 fontSize: '0.75rem',
-                fontWeight: 600
+                fontWeight: 600,
+                boxShadow: `0 2px 8px ${theme.palette.primary.main}40`,
+                animation: 'pulse 2s infinite',
+                '@keyframes pulse': {
+                  '0%': { transform: 'scale(1)' },
+                  '50%': { transform: 'scale(1.05)' },
+                  '100%': { transform: 'scale(1)' },
+                }
               }}>
-                <Info sx={{ fontSize: 12 }} /> info icon
-              </Box> on your messages for detailed feedback.
+                <Info sx={{ fontSize: 14 }} /> info icon
+              </Box> on your messages for personalized coaching insights!
+            </Typography>
+            <Typography variant="body2" sx={{ 
+              color: theme.palette.text.secondary,
+              lineHeight: 1.5,
+              fontStyle: 'italic'
+            }}>
+              💫 Pro tip: The icon will pulse on your latest message until you try it!
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Goal Evaluation Section */}
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2, 
+          mb: 0,
+          p: 2.5,
+          borderRadius: '12px',
+          bgcolor: theme.palette.warning.light + '15',
+          border: `1px solid ${theme.palette.warning.light}`,
+        }}>
+          <Avatar sx={{ 
+            bgcolor: theme.palette.warning.main, 
+            width: 48, 
+            height: 48,
+            flexShrink: 0
+          }}>
+            <Assessment sx={{ color: 'white' }} />
+          </Avatar>
+          <Box>
+            <Typography variant="body1" sx={{ 
+              color: theme.palette.text.primary,
+              lineHeight: 1.5,
+              mb: 1.5,
+              fontWeight: 600
+            }}>
+              🎯 Goal Evaluation
             </Typography>
             <Typography variant="body2" sx={{ 
               color: theme.palette.text.secondary,
               lineHeight: 1.5
             }}>
-              Use <strong>"Evaluate Goal"</strong> when you think you've achieved your objective.
+              Use <strong>"Evaluate Goal"</strong> when you think you've achieved your conversation objective.
             </Typography>
           </Box>
         </Box>
