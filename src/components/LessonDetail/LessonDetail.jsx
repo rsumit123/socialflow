@@ -95,6 +95,17 @@ const LessonDetail = () => {
   const [isListening, setIsListening] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState(null);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Evaluating your response...');
+
+  // Dynamic loading messages
+  const loadingMessages = [
+    'Evaluating your response...',
+    'Analyzing your communication style...',
+    'Checking for social cues...',
+    'Reviewing your approach...',
+    'Processing your interaction...',
+    'Crafting personalized feedback...',
+  ];
 
   useEffect(() => {
     if (lesson) {
@@ -194,6 +205,14 @@ const LessonDetail = () => {
 
   const submitResponse = async (response, timerEnded = false) => {
     setSubmitting(true);
+    
+    // Start cycling through loading messages
+    let messageIndex = 0;
+    const messageInterval = setInterval(() => {
+      messageIndex = (messageIndex + 1) % loadingMessages.length;
+      setLoadingMessage(loadingMessages[messageIndex]);
+    }, 1500);
+    
     try {
       const timeTaken = Math.round((Date.now() - startTime) / 1000);
       const requestBody = {
@@ -222,6 +241,8 @@ const LessonDetail = () => {
     } catch (error) {
       console.error('Error submitting response:', error);
     } finally {
+      clearInterval(messageInterval);
+      setLoadingMessage('Evaluating your response...');
       setSubmitting(false);
     }
   };
@@ -319,7 +340,7 @@ const LessonDetail = () => {
               boxShadow: 24,
             }}
           >
-            <LoadingScreen message="The master is evaluating your response..." />
+            <LoadingScreen message={loadingMessage} />
           </Box>
         </Fade>
       </Modal>

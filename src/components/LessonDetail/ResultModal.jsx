@@ -1,11 +1,12 @@
-import React from 'react';
-import { Box, Typography, Button, Paper, Fade, Chip } from '@mui/material';
-import { CheckCircle, Warning, RestartAlt, ArrowForward, GridView } from '@mui/icons-material';
+import React, { useState } from 'react';
+import { Box, Typography, Button, Paper, Fade, Chip, Collapse, Divider } from '@mui/material';
+import { CheckCircle, Warning, RestartAlt, ArrowForward, GridView, ExpandMore, ExpandLess, Lightbulb } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 const ResultModal = React.forwardRef((props, ref) => {
   const { theme, result, retryChallenge, isSmallScreen, onClose } = props;
   const navigate = useNavigate();
+  const [showExamples, setShowExamples] = useState(false);
 
   const handleNextLesson = () => {
     // Close the modal first, then navigate to the next lesson
@@ -34,10 +35,16 @@ const ResultModal = React.forwardRef((props, ref) => {
     navigate('/all-scenarios');
   };
 
+  const toggleExamples = () => {
+    setShowExamples(!showExamples);
+  };
+
   if (!result) return null;
 
   const isSuccess = result?.completed;
   const score = result?.score || 0;
+  const hasSampleResponses = result?.sample_responses && result.sample_responses.length > 0;
+  
   let scoreColor = 'error.main';
   
   if (score >= 80) {
@@ -128,7 +135,7 @@ const ResultModal = React.forwardRef((props, ref) => {
           elevation={0}
           sx={{ 
             backgroundColor: 'rgba(0, 0, 0, 0.04)', 
-            p: 2.5, 
+            p: { xs: 2, sm: 2.5 }, 
             borderRadius: '16px',
             mb: 4,
           }}
@@ -138,11 +145,102 @@ const ResultModal = React.forwardRef((props, ref) => {
             sx={{ 
               lineHeight: 1.6,
               color: 'text.primary',
+              fontSize: { xs: '0.9rem', sm: '1rem' },
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
             }}
           >
             {result?.feedback}
           </Typography>
         </Paper>
+
+        {/* Example Responses Section */}
+        {hasSampleResponses && (
+          <Box sx={{ mb: 4 }}>
+            <Box
+              onClick={toggleExamples}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                cursor: 'pointer',
+                p: 1.5,
+                borderRadius: '12px',
+                backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                border: `1px solid ${theme.palette.primary.main}22`,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  borderColor: theme.palette.primary.main + '44',
+                }
+              }}
+            >
+              <Lightbulb 
+                sx={{ 
+                  fontSize: 20, 
+                  color: theme.palette.primary.main 
+                }} 
+              />
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: theme.palette.primary.main,
+                  fontWeight: 500,
+                  fontSize: '0.95rem'
+                }}
+              >
+                Feeling stuck? Check example responses...
+              </Typography>
+              {showExamples ? (
+                <ExpandLess sx={{ fontSize: 20, color: theme.palette.primary.main }} />
+              ) : (
+                <ExpandMore sx={{ fontSize: 20, color: theme.palette.primary.main }} />
+              )}
+            </Box>
+            
+            <Collapse in={showExamples}>
+              <Box sx={{ mt: 2 }}>
+                <Divider sx={{ mb: 2 }} />
+                <Typography 
+                  variant="subtitle2" 
+                  sx={{ 
+                    mb: 2, 
+                    color: 'text.secondary',
+                    fontWeight: 600,
+                    textAlign: 'center'
+                  }}
+                >
+                  Here are some example responses:
+                </Typography>
+                {result.sample_responses.map((response, index) => (
+                  <Paper
+                    key={index}
+                    elevation={0}
+                    sx={{
+                      backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                      p: 2,
+                      borderRadius: '12px',
+                      mb: index < result.sample_responses.length - 1 ? 2 : 0,
+                      border: `1px solid ${theme.palette.secondary.main}22`,
+                    }}
+                  >
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        lineHeight: 1.5,
+                        color: 'text.primary',
+                        fontStyle: 'italic'
+                      }}
+                    >
+                      "{response}"
+                    </Typography>
+                  </Paper>
+                ))}
+              </Box>
+            </Collapse>
+          </Box>
+        )}
         
         <Box 
           sx={{ 
