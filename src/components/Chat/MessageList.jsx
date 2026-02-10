@@ -3,17 +3,18 @@ import { List, Box, Typography, useTheme } from '@mui/material';
 import MessageBubble from './MessageBubble';
 
 // Renders a list of messages and typing indicator
-const MessageList = React.memo(({ messages, isTyping }) => {
+const MessageList = React.memo(({ messages, isTyping, botName }) => {
   const theme = useTheme();
   
   // Render typing indicator with enhanced animation
   const renderTypingIndicator = () => (
     <MessageBubble
       key="typing"
+      botName={botName}
       message={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography component="div" sx={{ fontSize: '0.9rem', opacity: 0.9 }}>
-            Typing
+            {botName ? `${botName} is typing` : 'Typing'}
           </Typography>
           {[0, 1, 2].map((i) => (
             <Box
@@ -51,10 +52,11 @@ const MessageList = React.memo(({ messages, isTyping }) => {
       }}
     >
       {messages.map((msg, index) => (
-        <MessageBubble 
-          key={index} 
-          message={msg.message} 
+        <MessageBubble
+          key={index}
+          message={msg.message}
           sender={msg.sender}
+          botName={botName}
         />
       ))}
       {isTyping && renderTypingIndicator()}

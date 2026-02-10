@@ -245,7 +245,7 @@ const JustChat = () => {
               }}
             >
               {msg.sender === 'bot' && (
-                <Avatar sx={{ mr: 1 }}>🤖</Avatar>
+                <Avatar sx={{ mr: 1, bgcolor: 'primary.main' }}>{selectedBot.bot_name?.charAt(0).toUpperCase() || 'B'}</Avatar>
               )}
               {msg.sender === 'system' ? (
                 <ListItemText
@@ -276,12 +276,12 @@ const JustChat = () => {
           ))}
           {isTyping && (
             <ListItem sx={{ justifyContent: 'flex-start', mb: 1 }}>
-              <Avatar sx={{ mr: 1 }}>🤖</Avatar>
+              <Avatar sx={{ mr: 1, bgcolor: 'primary.main' }}>{selectedBot.bot_name?.charAt(0).toUpperCase() || 'B'}</Avatar>
               <ListItemText
                 primary={
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography variant="body1" sx={{ mr: 1 }}>
-                      AI is typing
+                      {selectedBot.bot_name || 'Bot'} is typing
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Box

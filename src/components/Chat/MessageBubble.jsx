@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ListItem, Avatar, Paper, Typography, Box, Zoom, useTheme } from '@mui/material';
-import { EmojiEmotions, Psychology, School } from '@mui/icons-material';
+import { EmojiEmotions, School } from '@mui/icons-material';
 
 // MessageBubble component for rendering individual chat messages
-const MessageBubble = React.memo(({ message, sender, delayAnimation = true }) => {
+const MessageBubble = React.memo(({ message, sender, delayAnimation = true, botName }) => {
   const theme = useTheme();
   const isUser = sender === 'user';
   const [visible, setVisible] = useState(!delayAnimation);
@@ -56,7 +56,7 @@ const MessageBubble = React.memo(({ message, sender, delayAnimation = true }) =>
               },
             }}
           >
-            {sender === 'bot' ? <Psychology sx={{ fontSize: 20 }} /> : <School sx={{ fontSize: 20 }} />}
+            {sender === 'bot' ? (botName ? botName.charAt(0).toUpperCase() : 'B') : <School sx={{ fontSize: 20 }} />}
           </Avatar>
         )}
         <Paper

@@ -352,28 +352,28 @@ const ChatDialogs = ({
         alignItems: 'center', 
         gap: 2,
         p: 2.5,
-        background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+        background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
         color: 'white',
       }}>
-        <Avatar sx={{ 
-          bgcolor: 'rgba(255,255,255,0.2)', 
-          width: 40, 
+        <Avatar sx={{
+          bgcolor: 'rgba(255,255,255,0.2)',
+          width: 40,
           height: 40,
         }}>
-          <Assessment />
+          <EmojiEvents />
         </Avatar>
         <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h6" sx={{ 
-            fontWeight: 600, 
+          <Typography variant="h6" sx={{
+            fontWeight: 600,
             fontSize: '1.1rem',
           }}>
-            ⚠️ Force Goal Evaluation
+            Check Goal Progress
           </Typography>
-          <Typography variant="body2" sx={{ 
-            opacity: 0.9, 
+          <Typography variant="body2" sx={{
+            opacity: 0.9,
             fontSize: '0.85rem',
           }}>
-            Manual goal assessment
+            Let's see how you're doing
           </Typography>
         </Box>
         <IconButton
@@ -406,7 +406,7 @@ const ChatDialogs = ({
             color: theme.palette.text.primary
           }}
         >
-          Goal Not Yet Detected
+          Let's Check Your Progress
         </Typography>
         
         <Typography 
@@ -417,18 +417,18 @@ const ChatDialogs = ({
             color: theme.palette.text.secondary
           }}
         >
-          Our system has not yet detected that your goal has been achieved.
+          We haven't automatically detected goal completion yet, but you might have gotten there!
         </Typography>
         
         <Typography 
           variant="body2" 
           sx={{ 
             fontWeight: 600,
-            color: theme.palette.warning.main,
+            color: theme.palette.info.main,
             mb: 1
           }}
         >
-          Do you want to force goal evaluation?
+          Would you like us to evaluate your conversation now?
         </Typography>
         
         <Typography 
@@ -439,7 +439,7 @@ const ChatDialogs = ({
             fontStyle: 'italic'
           }}
         >
-          This might impact your final score.
+          We'll review your full conversation to check.
         </Typography>
       </DialogContent>
       
@@ -457,7 +457,7 @@ const ChatDialogs = ({
             borderRadius: '12px',
             py: 1.2,
             px: 3,
-            background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+            background: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
             fontWeight: 600,
             order: { xs: 1, sm: 2 }
           }}

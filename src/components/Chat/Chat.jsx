@@ -15,7 +15,7 @@ import {
   Tooltip,
 } from '@mui/material';
 
-import { Send, Psychology, School, Info, ExitToApp, PsychologyAlt } from '@mui/icons-material';
+import { Send, Chat as ChatIcon, Info, ExitToApp, PsychologyAlt } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import { handleAuthErrors } from '../../Api';
@@ -48,10 +48,9 @@ const Chat = () => {
   const [evaluationModal, setEvaluationModal] = useState(false);
   const [reportLink, setReportLink] = useState('');
   const [isBottom, setIsBottom] = useState(true);
-  const [motivationSnackbarOpen, setMotivationSnackbarOpen] = useState(false);
-  const [motivationMessage, setMotivationMessage] = useState('');
   const [endChatDialogOpen, setEndChatDialogOpen] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
+  const [characterName, setCharacterName] = useState('your chat partner');
   const [reportGenerated, setReportGenerated] = useState(false); // Track if report has been generated
 
   const isMounted = useRef(false);
@@ -81,6 +80,7 @@ const Chat = () => {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/chat/sessions/?bot_id=${id}`);
         const { session_id, ai_response, custom_scenario } = response.data;
         setSessionId(session_id);
+        setCharacterName(custom_scenario?.ai_name || 'your chat partner');
 
         if (custom_scenario) {
           setTimeout(() => {
@@ -147,14 +147,6 @@ const Chat = () => {
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Show motivational message every 3 user messages (if below threshold)
-  useEffect(() => {
-    const userMsgCount = messages.filter((msg) => msg.sender === 'user').length;
-    if (userMsgCount > 0 && userMsgCount < MESSAGE_COUNT_THRESHOLD && userMsgCount % 3 === 0) {
-      setMotivationMessage(`You are doing good. Keep going for ${MESSAGE_COUNT_THRESHOLD - userMsgCount} more messages!`);
-      setMotivationSnackbarOpen(true);
-    }
-  }, [messages]);
 
   // Function to generate report
   const generateReport = async (shouldEndChat = false) => {
@@ -399,7 +391,7 @@ const Chat = () => {
               mb: 2,
             }}
           >
-            <Psychology
+            <ChatIcon
               sx={{
                 fontSize: 60,
                 color: theme.palette.primary.main,
@@ -412,11 +404,10 @@ const Chat = () => {
             />
           </Box>
           <Typography variant="body1" paragraph>
-            You are about to start a conversation with our AI character. This is a safe space to practice
-            your social skills.
+            You're about to chat with {characterName}. This is a safe space to practice your social skills.
           </Typography>
           <Typography variant="body1" paragraph>
-            Try to keep the conversation going for at least {MESSAGE_COUNT_THRESHOLD} messages to get a meaningful evaluation.
+            Just be yourself and enjoy the conversation!
           </Typography>
         </Box>
       }
@@ -539,7 +530,7 @@ const Chat = () => {
                 alignItems: 'center',
               }}
             >
-              <Psychology sx={{ mr: 1 }} /> Chat Session {messageCount > 0 && `(${messageCount}/${MESSAGE_COUNT_THRESHOLD})`}
+              Chat Session
             </Typography>
           </Box>
 
@@ -575,7 +566,7 @@ const Chat = () => {
             justifyContent: messages.length < 4 ? 'flex-end' : 'flex-start',
           }}
         >
-          <MessageList messages={messages} isTyping={isTyping} />
+          <MessageList messages={messages} isTyping={isTyping} botName={characterName} />
           <div ref={messagesEndRef} />
           <ScrollToBottomButton />
         </Box>
@@ -596,23 +587,6 @@ const Chat = () => {
         </Alert>
       </Snackbar>
 
-      {/* Motivational snackbar */}
-      <Snackbar
-        open={motivationSnackbarOpen}
-        autoHideDuration={4000}
-        onClose={() => setMotivationSnackbarOpen(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setMotivationSnackbarOpen(false)}
-          severity="info"
-          variant="filled"
-          icon={<School />}
-          sx={{ width: '100%' }}
-        >
-          {motivationMessage}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };
