@@ -20,34 +20,24 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        // Try to make a request to validate the token
+        // Validate the JWT token against the protected endpoint
+        // With simplejwt, this is a local cryptographic check — no external calls
         try {
-          // Try to use a lightweight endpoint to validate the token
-          // If the /api/auth/validate-token/ endpoint doesn't exist, use an endpoint that should work
-          try {
-            await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/protected/`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          } catch (e) {
-            // If the validation endpoint doesn't exist, try another lightweight endpoint
-            // like the user profile or some other endpoint that requires authentication
-            await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/me/`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          }
-          
-          // If any request succeeds, set the user
-          setUser({ token });
+          await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/protected/`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const email = localStorage.getItem('email');
+          setUser({ token, email });
         } catch (error) {
-          // If we get an auth error, the token is invalid/expired
           if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-            console.log("Token validation failed - clearing invalid token");
             localStorage.removeItem('token');
+            localStorage.removeItem('email');
             setUser(null);
           } else {
-            // For other errors (like network issues), still use the token but log the error
+            // Network error — still use the cached token
             console.warn("Error validating token but proceeding:", error);
-            setUser({ token });
+            const email = localStorage.getItem('email');
+            setUser({ token, email });
           }
         }
       } finally {
@@ -58,7 +48,7 @@ export const AuthProvider = ({ children }) => {
     validateToken();
   }, []);
 
-  // Add an interceptor to attach the token to outgoing requests on the main axios instance
+  // Attach token to outgoing requests
   useEffect(() => {
     const token = user?.token;
     if (token) {
@@ -70,74 +60,32 @@ export const AuthProvider = ({ children }) => {
         (error) => Promise.reject(error)
       );
 
-      // Cleanup the interceptor on unmount or when token changes
       return () => {
         axios.interceptors.request.eject(interceptor);
       };
     }
   }, [user]);
 
-  const register = async (email, password) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/register/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      
-      // Return the entire response object so we can check status code in the component
-      if (response.ok) {
-        const data = await response.json();
-        // Only set user if we're auto-logging in after registration
-        // For this app, we're redirecting to login instead
-        // localStorage.setItem('token', data.session.access_token);
-        // setUser({ email, token: data.session.access_token });
-      }
-      
-      return response;
-    } catch (error) {
-      console.error('Registration failed:', error);
-      throw error;
-    }
-  };
-
-  const login = async (email, password) => {
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login/`, { email, password });
-      if (response.data) {
-        localStorage.setItem('token', response.data.session.access_token);
-        setUser({ email, token: response.data.session.access_token });
-      }
-    } catch (error) {
-      console.error('Authentication failed:', error);
-      throw error;
-    }
-  };
-
-  // New guestLogin function
-  const guestLogin = async () => {
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/guest_login/`);
-      if (response.data) {
-        localStorage.setItem('token', response.data.session.access_token);
-        // Optionally, you can update user state with additional info if returned by your endpoint.
-        setUser({ token: response.data.session.access_token });
-      }
-    } catch (error) {
-      console.error('Guest login failed:', error);
-      throw error;
+  const googleLogin = async (credential) => {
+    const response = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/auth/google/`,
+      { credential }
+    );
+    if (response.data) {
+      localStorage.setItem('token', response.data.access);
+      localStorage.setItem('email', response.data.email);
+      setUser({ token: response.data.access, email: response.data.email });
     }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('email');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, guestLogin, initializing }}>
+    <AuthContext.Provider value={{ user, googleLogin, logout, initializing }}>
       {children}
     </AuthContext.Provider>
   );

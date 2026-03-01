@@ -70,7 +70,6 @@ const Header = (props) => {
       ]
     : [
         { name: 'Login', path: '/login' },
-        { name: 'Sign Up', path: '/register' },
       ];
 
   const toggleDrawer = (open) => () => {

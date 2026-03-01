@@ -10,13 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@auth0/auth0-react": "^2.2.4",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.1",
     "@mui/material": "^6.4.1",
     "@mui/styles": "^6.4.1",
     "@mui/x-data-grid": "^7.24.1",
+    "@react-oauth/google": "^0.13.4",
     "@tanstack/react-query": "^5.80.6",
     "axios": "^1.7.9",
     "canvas-confetti": "^1.9.3",

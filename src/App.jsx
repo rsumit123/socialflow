@@ -1,12 +1,12 @@
 import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { setupAxiosInterceptors } from './Api';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
-import Register from './components/Register';
 import Chat from './components/Chat/Chat';
 import ReportCards from './components/ReportCards';
 import ReportCardDetail from './components/ReportCardDetail';
@@ -82,6 +82,7 @@ const InitializeInterceptor = () => {
 
 function App() {
   return (
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
     <AuthProvider>
       <Router>
         <Header />
@@ -94,14 +95,6 @@ function App() {
               element={
                 <GuestRoute>
                   <Login />
-                </GuestRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <GuestRoute>
-                  <Register />
                 </GuestRoute>
               }
             />
@@ -237,6 +230,7 @@ function App() {
         <Footer />
       </Router>
     </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 

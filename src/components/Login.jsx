@@ -1,61 +1,38 @@
 // src/components/Login.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  Container, TextField, Button, Typography, Box, 
-  CircularProgress, Paper, Divider, InputAdornment, IconButton,
+import {
+  Container, Typography, Box, Paper, Alert,
   useMediaQuery, useTheme
 } from '@mui/material';
-import { useNavigate, Link } from 'react-router-dom';
-import EmailIcon from '@mui/icons-material/Email';
-import LockIcon from '@mui/icons-material/Lock';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
-  const { login, guestLogin } = useAuth();
+  const { googleLogin } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [error, setError] = useState('');
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
     try {
-      await login(email, password);
-      setLoading(false);
-      navigate('/chat');
-    } catch (error) {
-      setLoading(false);
-      alert('Failed to log in. Please check your credentials.');
+      await googleLogin(credentialResponse.credential);
+      navigate('/platform');
+    } catch (err) {
+      console.error('Google login failed:', err);
+      setError('Login failed. Please try again.');
     }
   };
 
-  const handleGuestLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await guestLogin();
-      setLoading(false);
-      navigate('/chat');
-    } catch (error) {
-      setLoading(false);
-      alert('Failed to log in as guest.');
-    }
-  };
-
-  const handleTogglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+  const handleGoogleError = () => {
+    setError('Google Sign-In was cancelled or failed. Please try again.');
   };
 
   return (
-    <Container 
-      component="main" 
+    <Container
+      component="main"
       maxWidth="sm"
       sx={{
         display: 'flex',
@@ -65,7 +42,7 @@ const Login = () => {
         py: isMobile ? 4 : 8
       }}
     >
-      <Paper 
+      <Paper
         elevation={3}
         sx={{
           p: isMobile ? 3 : 4,
@@ -77,145 +54,40 @@ const Login = () => {
           my: 'auto'
         }}
       >
-        <Typography 
-          component="h1" 
-          variant="h4" 
-          fontWeight="bold" 
+        <Typography
+          component="h1"
+          variant="h4"
+          fontWeight="bold"
           color="primary"
           sx={{ mb: 2, fontSize: isMobile ? '1.75rem' : '2.125rem' }}
         >
           Welcome to SocialFlow
         </Typography>
-        
-        <Typography 
-          variant="subtitle1" 
+
+        <Typography
+          variant="subtitle1"
           color="text.secondary"
-          sx={{ mb: 3 }}
+          sx={{ mb: 4 }}
         >
-          Sign in to continue to your account
+          Sign in to continue
         </Typography>
 
-        <Box component="form" noValidate sx={{ width: '100%' }} onSubmit={handleLogin}>
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <EmailIcon color="action" />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-              }
-            }}
-          />
-          
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            id="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <LockIcon color="action" />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={handleTogglePasswordVisibility}
-                    edge="end"
-                  >
-                    {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-              }
-            }}
-          />
-          
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            size="large"
-            sx={{ 
-              mt: 3, 
-              mb: 2,
-              py: 1.5,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 'bold'
-            }}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
-          </Button>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3, width: '100%' }}>
+            {error}
+          </Alert>
+        )}
 
-          <Divider sx={{ my: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              or
-            </Typography>
-          </Divider>
-          
-          <Button
-            fullWidth
-            variant="outlined"
-            color="secondary"
+        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
             size="large"
-            sx={{ 
-              mb: 2,
-              py: 1.5,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 'bold'
-            }}
-            onClick={handleGuestLogin}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Continue as Guest'}
-          </Button>
-          
-          <Box sx={{ textAlign: 'center', mt: 1 }}>
-            <Typography variant="body1">
-              Don't have an account?{' '}
-              <Link 
-                to="/register" 
-                style={{ 
-                  textDecoration: 'none', 
-                  fontWeight: 'bold',
-                  color: (theme) => theme.palette.primary.main
-                }}
-              >
-                Sign Up
-              </Link>
-            </Typography>
-          </Box>
+            width={isMobile ? 280 : 350}
+            text="signin_with"
+            shape="rectangular"
+            theme="outline"
+          />
         </Box>
       </Paper>
     </Container>

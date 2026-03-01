@@ -476,7 +476,7 @@ const AboutUs = () => {
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => navigate('/register')}
+                onClick={() => navigate('/login')}
                 sx={{
                   backgroundColor: 'white',
                   color: theme.palette.primary.main,
