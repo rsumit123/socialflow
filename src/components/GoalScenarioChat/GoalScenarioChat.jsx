@@ -174,15 +174,16 @@ const GoalScenarioChat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Show coaching intro popup after initial load
+  // Show coaching intro popup only once (persisted via localStorage)
   useEffect(() => {
     if (scenario && !isLoading) {
-      // Show after a brief delay to let the user see the interface first
-      const timer = setTimeout(() => {
-        setShowCoachingIntro(true);
-      }, 1500);
-      
-      return () => clearTimeout(timer);
+      const hasSeenIntro = localStorage.getItem('coaching_intro_seen');
+      if (!hasSeenIntro) {
+        const timer = setTimeout(() => {
+          setShowCoachingIntro(true);
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
     }
   }, [scenario, isLoading]);
 
@@ -518,11 +519,12 @@ const GoalScenarioChat = () => {
   }
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      height: '100vh',
-      bgcolor: 'background.default'
+    <Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100dvh',
+      bgcolor: 'background.default',
+      overflow: 'hidden',
     }}>
       {/* Header Component */}
       <GoalScenarioHeader
@@ -537,13 +539,12 @@ const GoalScenarioChat = () => {
       />
 
       {/* Chat Messages */}
-      <Box sx={{ flexGrow: 1, overflow: 'hidden', px: 2 }}>
+      <Box sx={{ flexGrow: 1, overflow: 'hidden', minHeight: 0 }}>
         <Paper
-          elevation={2}
+          elevation={0}
           sx={{
             height: '100%',
-            mt: 2,
-            borderRadius: '16px',
+            borderRadius: 0,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -606,7 +607,10 @@ const GoalScenarioChat = () => {
         
         // Coaching Intro Dialog
         showCoachingIntro={showCoachingIntro}
-        setShowCoachingIntro={setShowCoachingIntro}
+        setShowCoachingIntro={(val) => {
+          setShowCoachingIntro(val);
+          if (!val) localStorage.setItem('coaching_intro_seen', 'true');
+        }}
         
         // Error Snackbar
         openSnackbar={openSnackbar}

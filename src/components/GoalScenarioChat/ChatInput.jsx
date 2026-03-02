@@ -32,41 +32,7 @@ const ChatInput = ({
   const theme = useTheme();
 
   return (
-    <Box sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
-      {/* Evaluate Goal Button in input area - show when not achieved and has messages */}
-      {!goalAchieved && messageCount > 0 && (
-        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
-          <Button
-            variant="outlined"
-            onClick={onForceEvaluation}
-            disabled={isEvaluating && !showEvaluationConfirm}
-            startIcon={
-              (isEvaluating && !showEvaluationConfirm) ? (
-                <CircularProgress size={16} />
-              ) : (
-                <Assessment />
-              )
-            }
-            sx={{
-              borderRadius: '20px',
-              px: 3,
-              py: 1,
-              borderColor: theme.palette.warning.main,
-              color: theme.palette.warning.main,
-              '&:hover': {
-                borderColor: theme.palette.warning.dark,
-                bgcolor: theme.palette.warning.light + '20',
-              },
-              '&:disabled': {
-                opacity: 0.6,
-              }
-            }}
-          >
-            {(isEvaluating && !showEvaluationConfirm) ? 'Evaluating...' : 'Evaluate Goal'}
-          </Button>
-        </Box>
-      )}
-      
+    <Box sx={{ p: { xs: 1.5, md: 2 }, borderTop: `1px solid ${theme.palette.divider}` }}>
       <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
         <TextField
           fullWidth

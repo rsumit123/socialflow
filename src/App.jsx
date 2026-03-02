@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { setupAxiosInterceptors } from './Api';
@@ -80,154 +80,168 @@ const InitializeInterceptor = () => {
   return null;
 };
 
+// Routes where Header and Footer should be hidden (fullscreen chat experiences)
+const FULLSCREEN_ROUTES = ['/goal-objectives/scenario/'];
+
+const AppLayout = () => {
+  const location = useLocation();
+  const isFullscreen = FULLSCREEN_ROUTES.some(route => location.pathname.startsWith(route));
+
+  return (
+    <>
+      {!isFullscreen && <Header />}
+      <InitializeInterceptor />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <Login />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/platform"
+            element={
+              <ProtectedRoute>
+                <PlatformPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+
+                <LearnMore />
+
+            }
+          />
+          <Route
+            path="/bots"
+            element={
+                <BotSelection />
+            }
+          />
+          <Route
+            path="/chat/character/:id"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/report-cards"
+            element={
+              <ProtectedRoute>
+                <ReportCards />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/report-cards/:session_id"
+            element={
+              <ProtectedRoute>
+                <ReportCardDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/training/:categoryId"
+            element={
+              <ProtectedRoute>
+                <Categories />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/training/subcategories/:categoryId"
+            element={
+              <ProtectedRoute>
+                <Subcategories />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/training/lessons/:subcategoryId"
+            element={
+              <ProtectedRoute>
+                <Lessons />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/training/intro/:subcategoryId"
+            element={
+              <ProtectedRoute>
+                <IntroLessonDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/training/lessondetail/:lessonId"
+            element={
+              <ProtectedRoute>
+                <LessonDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/all-scenarios"
+            element={
+              <ProtectedRoute>
+                <AllLessons />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/goal-objectives"
+            element={
+              <ProtectedRoute>
+                <GoalBasedObjectives />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/goal-objectives/scenario/:scenarioId"
+            element={
+              <ProtectedRoute>
+                <GoalScenarioChat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/privacy"
+            element={
+
+                < PrivacyPolicy />
+
+            }
+          />
+          <Route
+            path="/terms"
+            element={
+
+                <TermsOfService />
+
+            }
+          />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Suspense>
+      {!isFullscreen && <Footer />}
+    </>
+  );
+};
+
 function App() {
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
     <AuthProvider>
       <Router>
-        <Header />
-        <InitializeInterceptor />
-        <Suspense fallback={<div>Loading...</div>}>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route
-              path="/login"
-              element={
-                <GuestRoute>
-                  <Login />
-                </GuestRoute>
-              }
-            />
-            <Route
-              path="/platform"
-              element={
-                <ProtectedRoute>
-                  <PlatformPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/about"
-              element={
-                
-                  <LearnMore />
-                
-              }
-            />
-            <Route
-              path="/bots"
-              element={
-                  <BotSelection />
-              }
-            />
-            <Route
-              path="/chat/character/:id"
-              element={
-                <ProtectedRoute>
-                  <Chat />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/report-cards"
-              element={
-                <ProtectedRoute>
-                  <ReportCards />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/report-cards/:session_id"
-              element={
-                <ProtectedRoute>
-                  <ReportCardDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/training/:categoryId"
-              element={
-                <ProtectedRoute>
-                  <Categories />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/training/subcategories/:categoryId"
-              element={
-                <ProtectedRoute>
-                  <Subcategories />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/training/lessons/:subcategoryId"
-              element={
-                <ProtectedRoute>
-                  <Lessons />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/training/intro/:subcategoryId"
-              element={
-                <ProtectedRoute>
-                  <IntroLessonDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/training/lessondetail/:lessonId"
-              element={
-                <ProtectedRoute>
-                  <LessonDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/all-scenarios"
-              element={
-                <ProtectedRoute>
-                  <AllLessons />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/goal-objectives"
-              element={
-                <ProtectedRoute>
-                  <GoalBasedObjectives />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/goal-objectives/scenario/:scenarioId"
-              element={
-                <ProtectedRoute>
-                  <GoalScenarioChat />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/privacy"
-              element={
-                
-                  < PrivacyPolicy />
-                
-              }
-            />
-            <Route
-              path="/terms"
-              element={
-                
-                  <TermsOfService />
-                
-              }
-            />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </Suspense>
-        <Footer />
+        <AppLayout />
       </Router>
     </AuthProvider>
     </GoogleOAuthProvider>

@@ -108,12 +108,13 @@ const ChatMessages = ({
     <ListItem sx={{ justifyContent: 'flex-start', mb: 2, p: 0 }}>
       <Fade in timeout={300}>
         <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
-          <Avatar 
-            sx={{ 
-              bgcolor: theme.palette.secondary.main, 
-              width: 40, 
+          <Avatar
+            sx={{
+              bgcolor: theme.palette.secondary.main,
+              width: 40,
               height: 40,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              display: { xs: 'none', md: 'flex' },
             }}
           >
             <Psychology sx={{ fontSize: 20 }} />
@@ -182,7 +183,7 @@ const ChatMessages = ({
               <Fade in timeout={300}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, maxWidth: '80%' }}>
                   {msg.sender === 'ai' && (
-                    <Avatar sx={{ bgcolor: theme.palette.secondary.main }}>
+                    <Avatar sx={{ bgcolor: theme.palette.secondary.main, display: { xs: 'none', md: 'flex' } }}>
                       <Psychology />
                     </Avatar>
                   )}
@@ -255,7 +256,7 @@ const ChatMessages = ({
                     )}
                   </Box>
                   {msg.sender === 'user' && (
-                    <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                    <Avatar sx={{ bgcolor: theme.palette.primary.main, display: { xs: 'none', md: 'flex' } }}>
                       <SentimentSatisfied />
                     </Avatar>
                   )}
