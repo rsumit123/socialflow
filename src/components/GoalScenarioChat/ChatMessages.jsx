@@ -22,7 +22,6 @@ import { useTheme } from '@mui/material/styles';
 const ChatMessages = ({
   messages,
   isTyping,
-  isJudging,
   messagesEndRef,
   onShowMessageFeedback,
 }) => {
@@ -268,46 +267,6 @@ const ChatMessages = ({
         })}
         
         {isTyping && renderTypingIndicator()}
-
-        {isJudging && !isTyping && (
-          <ListItem sx={{ justifyContent: 'flex-start', py: 0.5 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                px: 2,
-                py: 0.75,
-                borderRadius: '999px',
-                bgcolor: 'rgba(255,255,255,0.04)',
-                border: `1px dashed ${theme.palette.divider}`,
-              }}
-            >
-              <Box sx={{ display: 'flex', gap: 0.4 }}>
-                {[0, 1, 2].map((i) => (
-                  <Box
-                    key={i}
-                    sx={{
-                      width: 5,
-                      height: 5,
-                      bgcolor: theme.palette.secondary.main,
-                      borderRadius: '50%',
-                      animation: 'judging 1.2s infinite ease-in-out both',
-                      animationDelay: `${i * 0.15}s`,
-                      '@keyframes judging': {
-                        '0%, 80%, 100%': { opacity: 0.3 },
-                        '40%': { opacity: 1 },
-                      },
-                    }}
-                  />
-                ))}
-              </Box>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                Analyzing your turn…
-              </Typography>
-            </Box>
-          </ListItem>
-        )}
       </List>
       <div ref={messagesEndRef} />
     </Box>

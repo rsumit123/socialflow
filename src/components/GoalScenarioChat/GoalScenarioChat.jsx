@@ -38,7 +38,6 @@ const GoalScenarioChat = () => {
   const [messages, setMessages] = useState([]);
   const [userMessage, setUserMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [isJudging, setIsJudging] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [goalAchieved, setGoalAchieved] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -237,7 +236,7 @@ const GoalScenarioChat = () => {
 
   // Handle sending messages
   const handleSendMessage = async () => {
-    if (!userMessage.trim() || isTyping || isJudging) return;
+    if (!userMessage.trim() || isTyping) return;
 
     const currentMessageId = Date.now();
     const newMessage = {
@@ -252,9 +251,8 @@ const GoalScenarioChat = () => {
     setIsTyping(true);
     setMessageCount(prev => prev + 1);
 
-    let interactData;
     try {
-      const response = await fetch(
+      const interactRes = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/scenarios/${scenarioId}/interact/`,
         {
           method: 'POST',
@@ -262,41 +260,16 @@ const GoalScenarioChat = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${user.token}`,
           },
-          body: JSON.stringify({
-            user_input: userMessage.trim()
-          }),
+          body: JSON.stringify({ user_input: userMessage.trim() }),
         }
       );
+      if (handleAuthErrors(interactRes, navigate)) throw new Error("Failed to send message");
+      const interactData = await interactRes.json();
 
-      if (handleAuthErrors(response, navigate)) throw new Error("Failed to send message");
-      interactData = await response.json();
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setMessages(prev => [...prev, {
-        message: 'Sorry, there was an error processing your message. Please try again.',
-        sender: 'system',
-        timestamp: Date.now(),
-        type: 'error'
-      }]);
-      setErrorMessage('Failed to send message');
-      setOpenSnackbar(true);
-      setIsTyping(false);
-      return;
-    }
-
-    // Render persona reply after a short natural typing delay, then kick off the
-    // judge call. Input stays disabled (isJudging) until the judge returns so we
-    // never miss a goal_achieved transition.
-    setTimeout(async () => {
-      setMessages(prev => [...prev, {
-        message: interactData.ai_response,
-        sender: 'ai',
-        timestamp: Date.now()
-      }]);
-      setIsTyping(false);
-      setIsJudging(true);
-
-      let judgeData;
+      // Judge depends on the persona reply already being saved; we run it
+      // sequentially and show the AI reply + tip together so the UI matches
+      // the previous one-shot behavior.
+      let judgeData = {};
       try {
         const judgeRes = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/scenarios/${scenarioId}/judge/`,
@@ -311,46 +284,63 @@ const GoalScenarioChat = () => {
         );
         if (handleAuthErrors(judgeRes, navigate)) throw new Error('Judge failed');
         judgeData = await judgeRes.json();
-      } catch (err) {
-        console.error('Judge error:', err);
-        setIsJudging(false);
-        return; // persona reply already shown; just skip tip/goal-check for this turn
+      } catch (judgeErr) {
+        console.error('Judge error (continuing without tip):', judgeErr);
       }
 
-      // Attach feedback to the user message bubble for later inspection
-      if (judgeData.feedback) {
-        setMessages(prev => prev.map(msg =>
-          msg.id === currentMessageId ? { ...msg, feedback: judgeData.feedback } : msg
-        ));
-      }
+      setTimeout(() => {
+        if (judgeData.feedback) {
+          setMessages(prev => prev.map(msg =>
+            msg.id === currentMessageId ? { ...msg, feedback: judgeData.feedback } : msg
+          ));
+        }
 
-      if (judgeData.goal_achieved && !goalAchieved) {
-        setGoalAchieved(true);
-        if (judgeData.real_time_tip) {
+        setMessages(prev => [...prev, {
+          message: interactData.ai_response,
+          sender: 'ai',
+          timestamp: Date.now()
+        }]);
+
+        if (judgeData.goal_achieved && !goalAchieved) {
+          setGoalAchieved(true);
+          if (judgeData.real_time_tip) {
+            setRealtimeTip(judgeData.real_time_tip);
+            setFeedbackScore(judgeData.score);
+            setShowFeedback(true);
+            setTimeout(() => setShowFeedback(false), 6000);
+          }
+          queryClient.invalidateQueries(['learningPaths']);
+          setTimeout(() => {
+            setShowSuccessModal(true);
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+              colors: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57']
+            });
+          }, 1000);
+        } else if (judgeData.real_time_tip) {
           setRealtimeTip(judgeData.real_time_tip);
-          setFeedbackScore(judgeData.score);
+          setFeedbackScore(null);
           setShowFeedback(true);
           setTimeout(() => setShowFeedback(false), 6000);
         }
-        queryClient.invalidateQueries(['learningPaths']);
-        setTimeout(() => {
-          setShowSuccessModal(true);
-          confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57']
-          });
-        }, 1000);
-      } else if (judgeData.real_time_tip) {
-        setRealtimeTip(judgeData.real_time_tip);
-        setFeedbackScore(null);
-        setShowFeedback(true);
-        setTimeout(() => setShowFeedback(false), 6000);
-      }
 
-      setIsJudging(false);
-    }, 800 + Math.random() * 1000);
+        setIsTyping(false);
+      }, 800 + Math.random() * 1000);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessages(prev => [...prev, {
+        message: 'Sorry, there was an error processing your message. Please try again.',
+        sender: 'system',
+        timestamp: Date.now(),
+        type: 'error'
+      }]);
+      setErrorMessage('Failed to send message');
+      setOpenSnackbar(true);
+      setIsTyping(false);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -564,7 +554,6 @@ const GoalScenarioChat = () => {
           <ChatMessages
             messages={messages}
             isTyping={isTyping}
-            isJudging={isJudging}
             messagesEndRef={messagesEndRef}
             onShowMessageFeedback={handleShowMessageFeedback}
           />
@@ -573,7 +562,7 @@ const GoalScenarioChat = () => {
           <ChatInput
             userMessage={userMessage}
             setUserMessage={setUserMessage}
-            isTyping={isTyping || isJudging}
+            isTyping={isTyping}
             isListening={isListening}
             speechSupported={speechSupported}
             goalAchieved={goalAchieved}
