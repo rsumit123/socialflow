@@ -37,6 +37,9 @@ function HideOnScroll(props) {
   );
 }
 
+// Set to true to re-enable legacy nav links (/bots, /goal-objectives, /training)
+const SHOW_LEGACY = false;
+
 const Header = (props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { user, logout } = useAuth();
@@ -48,7 +51,7 @@ const Header = (props) => {
   const navItems = user
     ? [
         { name: 'Platform', path: '/platform' },
-        { name: 'Evaluate', path: '/bots' },
+        ...(SHOW_LEGACY ? [{ name: 'Evaluate', path: '/bots' }] : []),
         { name: 'Progress Tracker', path: '/report-cards' },
         { name: 'About', path: '/about' },
       ]

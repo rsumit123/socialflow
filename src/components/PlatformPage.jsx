@@ -678,6 +678,9 @@ const CreativeLoading = () => {
   );
 };
 
+// Set to true to re-enable legacy module cards (/goal-objectives, /bots, /training)
+const SHOW_LEGACY = false;
+
 const PlatformPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -725,23 +728,25 @@ const PlatformPage = () => {
       locked: false,
       isFeatured: true,
     },
-    {
-      title: 'Mission Control',
-      icon: <LocalFireDepartment sx={{ fontSize: 40 }} />,
-      description: 'Complete conversation missions with specific objectives.',
-      detailedDescription: 'Master targeted communication skills through goal-oriented practice sessions. Each mission focuses on specific social situations with clear objectives and real-time AI coaching feedback.',
-      path: '/goal-objectives',
-      locked: false,
-      isNew: true,
-    },
-    {
-      title: 'Dynamic Dialogues',
-      icon: <Chat sx={{ fontSize: 40 }} />,
-      description: 'Practice conversations with AI personas and improve your communication skills.',
-      detailedDescription: 'Engage in free-flowing conversations with diverse AI personalities. Build confidence through natural dialogue practice without pressure or judgment.',
-      path: '/bots',
-      locked: false,
-    },
+    ...(SHOW_LEGACY ? [
+      {
+        title: 'Mission Control',
+        icon: <LocalFireDepartment sx={{ fontSize: 40 }} />,
+        description: 'Complete conversation missions with specific objectives.',
+        detailedDescription: 'Master targeted communication skills through goal-oriented practice sessions. Each mission focuses on specific social situations with clear objectives and real-time AI coaching feedback.',
+        path: '/goal-objectives',
+        locked: false,
+        isNew: true,
+      },
+      {
+        title: 'Dynamic Dialogues',
+        icon: <Chat sx={{ fontSize: 40 }} />,
+        description: 'Practice conversations with AI personas and improve your communication skills.',
+        detailedDescription: 'Engage in free-flowing conversations with diverse AI personalities. Build confidence through natural dialogue practice without pressure or judgment.',
+        path: '/bots',
+        locked: false,
+      },
+    ] : []),
     {
       title: 'Progress Tracker',
       icon: <Assessment sx={{ fontSize: 40 }} />,

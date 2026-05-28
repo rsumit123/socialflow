@@ -23,6 +23,9 @@ import BotSelection from './components/BotSelection';
 import AllLessons from './components/AllLessons';
 import GoalBasedObjectives from './components/GoalBasedObjectives';
 import GoalScenarioChat from './components/GoalScenarioChat';
+import RoastFeed from './components/Roast/RoastFeed';
+import HallOfFame from './components/Roast/HallOfFame';
+import RoastMe from './components/Roast/RoastMe';
 import { Box, CircularProgress } from '@mui/material';
 
 // Protected Route Component
@@ -81,7 +84,7 @@ const InitializeInterceptor = () => {
 };
 
 // Routes where Header and Footer should be hidden (fullscreen chat experiences)
-const FULLSCREEN_ROUTES = ['/goal-objectives/scenario/'];
+const FULLSCREEN_ROUTES = ['/goal-objectives/scenario/', '/roast', '/roast/hall-of-fame', '/roast/me'];
 
 const AppLayout = () => {
   const location = useLocation();
@@ -226,6 +229,30 @@ const AppLayout = () => {
 
                 <TermsOfService />
 
+            }
+          />
+          <Route
+            path="/roast"
+            element={
+              <ProtectedRoute>
+                <RoastFeed />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/roast/hall-of-fame"
+            element={
+              <ProtectedRoute>
+                <HallOfFame />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/roast/me"
+            element={
+              <ProtectedRoute>
+                <RoastMe />
+              </ProtectedRoute>
             }
           />
           <Route path="*" element={<Navigate to="/" />} />
