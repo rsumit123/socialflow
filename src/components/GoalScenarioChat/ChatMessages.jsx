@@ -16,8 +16,59 @@ import {
   Psychology,
   SentimentSatisfied,
   Info,
+  Lightbulb,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
+
+// Split a message into normal text + *stage directions*. Stage directions are
+// rendered as muted italic action lines (e.g. *sips chai* → "sips chai" italic).
+const STAGE_RE = /\*([^*\n]+?)\*/g;
+const renderMessageBody = (raw, theme, sender) => {
+  if (!raw) return null;
+  const lines = String(raw).split(/\n+/).filter(l => l.length > 0);
+  const actionColor = sender === 'user' ? 'rgba(255,255,255,0.7)' : theme.palette.text.secondary;
+  return (
+    <Box>
+      {lines.map((line, li) => {
+        const parts = [];
+        let lastIdx = 0;
+        let match;
+        STAGE_RE.lastIndex = 0;
+        while ((match = STAGE_RE.exec(line)) !== null) {
+          if (match.index > lastIdx) parts.push({ kind: 'text', text: line.slice(lastIdx, match.index) });
+          parts.push({ kind: 'action', text: match[1].trim() });
+          lastIdx = match.index + match[0].length;
+        }
+        if (lastIdx < line.length) parts.push({ kind: 'text', text: line.slice(lastIdx) });
+        if (parts.length === 0) parts.push({ kind: 'text', text: line });
+
+        // If the whole line is one action, render as a standalone muted line
+        if (parts.length === 1 && parts[0].kind === 'action') {
+          return (
+            <Typography
+              key={li}
+              variant="body2"
+              sx={{ fontStyle: 'italic', color: actionColor, opacity: 0.85, mb: 0.5 }}
+            >
+              {parts[0].text}
+            </Typography>
+          );
+        }
+        return (
+          <Typography key={li} variant="body1" sx={{ mb: li < lines.length - 1 ? 0.5 : 0 }}>
+            {parts.map((p, pi) => p.kind === 'action' ? (
+              <Box key={pi} component="span" sx={{ fontStyle: 'italic', color: actionColor, opacity: 0.85 }}>
+                {p.text}
+              </Box>
+            ) : (
+              <span key={pi}>{p.text}</span>
+            ))}
+          </Typography>
+        );
+      })}
+    </Box>
+  );
+};
 
 const ChatMessages = ({
   messages,
@@ -202,10 +253,34 @@ const ChatMessages = ({
                         pr: msg.sender === 'user' && msg.feedback ? 5 : 2,
                       }}
                     >
-                      <Typography variant="body1">
-                        {msg.message}
-                      </Typography>
+                      {renderMessageBody(msg.message, theme, msg.sender)}
                     </Paper>
+                    {/* Inline coach tip below AI bubble */}
+                    {msg.sender === 'ai' && msg.tip && (
+                      <Box
+                        sx={{
+                          mt: 1,
+                          ml: 0.5,
+                          px: 1.5,
+                          py: 1,
+                          borderRadius: '12px',
+                          bgcolor: 'rgba(33, 150, 243, 0.08)',
+                          border: `1px solid ${theme.palette.info.main}33`,
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 1,
+                          maxWidth: '100%',
+                        }}
+                      >
+                        <Lightbulb sx={{ fontSize: 16, color: theme.palette.info.main, mt: '2px', flexShrink: 0 }} />
+                        <Typography
+                          variant="caption"
+                          sx={{ color: 'text.secondary', lineHeight: 1.4, fontSize: '0.78rem' }}
+                        >
+                          {msg.tip}
+                        </Typography>
+                      </Box>
+                    )}
                     {/* Info icon for user messages with feedback */}
                     {msg.sender === 'user' && msg.feedback && (
                       <Tooltip 

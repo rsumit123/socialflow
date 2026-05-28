@@ -42,6 +42,13 @@ const ChatInput = ({
           value={userMessage}
           onChange={(e) => setUserMessage(e.target.value)}
           onKeyPress={onKeyPress}
+          onFocus={() => {
+            // iOS keyboard shoves the viewport; scroll the freshly-revealed
+            // input area back into view after the keyboard finishes animating.
+            setTimeout(() => {
+              try { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }); } catch (_) {}
+            }, 300);
+          }}
           disabled={isTyping}
           variant="outlined"
           sx={{

@@ -288,46 +288,36 @@ const GoalScenarioChat = () => {
         console.error('Judge error (continuing without tip):', judgeErr);
       }
 
-      setTimeout(() => {
-        if (judgeData.feedback) {
-          setMessages(prev => prev.map(msg =>
-            msg.id === currentMessageId ? { ...msg, feedback: judgeData.feedback } : msg
-          ));
-        }
+      if (judgeData.feedback) {
+        setMessages(prev => prev.map(msg =>
+          msg.id === currentMessageId ? { ...msg, feedback: judgeData.feedback } : msg
+        ));
+      }
 
-        setMessages(prev => [...prev, {
-          message: interactData.ai_response,
-          sender: 'ai',
-          timestamp: Date.now()
-        }]);
+      // Attach the coach tip directly to the AI bubble — appears as an inline
+      // card below it rather than a snackbar that covers content on mobile.
+      setMessages(prev => [...prev, {
+        message: interactData.ai_response,
+        sender: 'ai',
+        timestamp: Date.now(),
+        tip: judgeData.real_time_tip || null,
+      }]);
 
-        if (judgeData.goal_achieved && !goalAchieved) {
-          setGoalAchieved(true);
-          if (judgeData.real_time_tip) {
-            setRealtimeTip(judgeData.real_time_tip);
-            setFeedbackScore(judgeData.score);
-            setShowFeedback(true);
-            setTimeout(() => setShowFeedback(false), 6000);
-          }
-          queryClient.invalidateQueries(['learningPaths']);
-          setTimeout(() => {
-            setShowSuccessModal(true);
-            confetti({
-              particleCount: 100,
-              spread: 70,
-              origin: { y: 0.6 },
-              colors: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57']
-            });
-          }, 1000);
-        } else if (judgeData.real_time_tip) {
-          setRealtimeTip(judgeData.real_time_tip);
-          setFeedbackScore(null);
-          setShowFeedback(true);
-          setTimeout(() => setShowFeedback(false), 6000);
-        }
+      if (judgeData.goal_achieved && !goalAchieved) {
+        setGoalAchieved(true);
+        queryClient.invalidateQueries(['learningPaths']);
+        setTimeout(() => {
+          setShowSuccessModal(true);
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57']
+          });
+        }, 600);
+      }
 
-        setIsTyping(false);
-      }, 800 + Math.random() * 1000);
+      setIsTyping(false);
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -487,8 +477,8 @@ const GoalScenarioChat = () => {
         display: 'flex', 
         flexDirection: 'column',
         justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
+        alignItems: 'center',
+        height: '100dvh',
         bgcolor: 'background.default'
       }}>
         <CircularProgress size={60} sx={{ mb: 2 }} />
