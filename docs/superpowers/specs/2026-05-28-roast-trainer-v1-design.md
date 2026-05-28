@@ -176,17 +176,18 @@ The share card is the growth channel. Every screenshot in a WhatsApp group is po
 - **Judge tone calibration:** Sonnet may be too sanitized for "Savage" scoring. Will need few-shot examples in the judge prompt to anchor the cultural register.
 - **Background pool cost:** ~$0.50/day is fine at v1 scale; balloons with `categories × languages × difficulty`. Add a hard daily spend cap.
 - **Push notification opt-in:** mobile web push is finicky on iOS. May need to fall back to email reminders.
-- **Cultural sensitivity:** roast content can shade into casteist / sexist / religious territory easily. Need an automated content filter on generated scenarios + a user report flow.
+- **Cultural sensitivity:** roast content can shade into casteist / sexist / religious territory easily. **v1 ships without a content filter or report flow** — we accept this risk consciously because we have zero users and over-engineering safety before product-market fit is a waste. Revisit the moment a problematic share goes viral or DAU > ~100.
 
 ## 12. Success criteria
 
-After 6-8 weeks live, the v1 is "working" if:
-- DAU / MAU > 0.25 (Snapchat-tier stickiness)
-- Average streak length among returning users > 5 days
-- At least 10% of attempts are shared
-- Share-driven acquisitions > 0 (any organic traffic from shared cards)
+Loose v1 bar — we're validating the loop pulls at all, not aspiring to Snapchat metrics. After 6-8 weeks live, v1 is "working" if **any** of these are true:
 
-If these are not hit, the engagement-first thesis is wrong and we reconsider.
+- A handful of users (≥10) maintain a 3+ day streak unprompted.
+- Median session has > 1 roast (people don't bounce after one card).
+- Any organic traffic from a shared card (>0 share-driven sessions).
+- Qualitative: at least one user tells someone else about it without being asked.
+
+If none of these happen in 6-8 weeks, the engagement-first thesis is wrong and we reconsider direction. We are explicitly NOT optimizing for DAU/MAU ratios at this stage.
 
 ## 13. Future work (post-v1, explicitly deferred)
 
