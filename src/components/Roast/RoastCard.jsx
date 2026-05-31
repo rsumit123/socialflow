@@ -3,6 +3,7 @@ import { Box, Paper, Typography, TextField, Button, IconButton, CircularProgress
 import { Send, BookmarkBorder, Bookmark, IosShare, Refresh } from '@mui/icons-material';
 import ScoreChips from './ScoreChips';
 import ReactionLine from './ReactionLine';
+import ContextSetup from './ContextSetup';
 
 const RoastCard = ({ scenario, onSubmit, onSave, onShare, onNext, onRetry }) => {
   const [reply, setReply] = useState('');
@@ -31,12 +32,7 @@ const RoastCard = ({ scenario, onSubmit, onSave, onShare, onNext, onRetry }) => 
 
   return (
     <Paper elevation={4} sx={{ p: 3, borderRadius: 4, maxWidth: 560, mx: 'auto', width: '100%' }}>
-      <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 800, letterSpacing: 1.5 }}>
-        {scenario.character.toUpperCase()}
-      </Typography>
-      <Typography variant="h6" sx={{ mt: 1, fontWeight: 600, lineHeight: 1.4 }}>
-        {scenario.setup_line}
-      </Typography>
+      <ContextSetup scenario={scenario} />
 
       {!result ? (
         <Box sx={{ mt: 3 }}>
