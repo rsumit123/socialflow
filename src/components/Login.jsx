@@ -19,7 +19,7 @@ const Login = () => {
     setError('');
     try {
       await googleLogin(credentialResponse.credential);
-      navigate('/platform');
+      navigate('/roast');
     } catch (err) {
       console.error('Google login failed:', err);
       setError('Login failed. Please try again.');

@@ -720,13 +720,21 @@ const PlatformPage = () => {
 
   const modules = [
     {
+      title: 'Roast Mode 🔥',
+      icon: <LocalFireDepartment sx={{ fontSize: 40 }} />,
+      description: 'The daily Indian comeback game',
+      detailedDescription: 'Reply to tweets, LinkedIn brags, Slack DMs and Bumble bios with one-line zingers. AI judges your wit. 3 a day keeps your streak alive.',
+      path: '/roast',
+      locked: false,
+      isFeatured: true,
+    },
+    {
       title: 'Quick Bites',
       icon: <Stars sx={{ fontSize: 40 }} />,
       description: 'Test your social skills in 90 seconds',
       detailedDescription: 'Jump directly into a variety of practice scenarios. Perfect for quick skill building sessions when you have limited time. Each scenario is designed to be completed in under 2 minutes.',
       path: '/all-scenarios',
       locked: false,
-      isFeatured: true,
     },
     ...(SHOW_LEGACY ? [
       {
